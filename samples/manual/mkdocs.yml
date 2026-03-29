@@ -1,0 +1,54 @@
+site_name: Sample Manual
+site_description: Sample site for the manual template
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.tracking
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          name: English
+          build: true
+          default: true
+          nav:
+            - Home: index.md
+        - locale: ko
+          name: 한국어
+          build: true
+          nav:
+            - Home: index.md
+          nav_translations:
+            Home: 홈
+
+extra_css:
+  - styles/lists.css
+  - styles/pdf.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - abbr
+  - pymdownx.snippets
