@@ -1,0 +1,45 @@
+# Base MkDocs configuration for the "api-reference" template.
+# Consuming projects should set site_name, site_description, repo_url,
+# site_url, and nav in their own mkdocs.yml and reference the theme
+# assets installed by fetch-theme.sh.
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.tracking
+    - navigation.indexes
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+
+extra_css:
+  - .theme/styles/lists.css
+  - .theme/styles/pdf.css
+  - .theme/styles/api.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - abbr
+  - pymdownx.snippets

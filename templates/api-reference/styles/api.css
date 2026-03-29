@@ -1,0 +1,31 @@
+/* API reference-specific styles. */
+
+/* HTTP method badges */
+.method-badge {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  font-size: 0.75em;
+  font-weight: 700;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color: #ffffff;
+  vertical-align: middle;
+  margin-right: 0.4em;
+}
+
+.method-get    { background-color: #2e7d32; }
+.method-post   { background-color: #1565c0; }
+.method-put    { background-color: #ef6c00; }
+.method-patch  { background-color: #7b1fa2; }
+.method-delete { background-color: #c62828; }
+
+/* Endpoint path styling */
+.endpoint-path {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-weight: 500;
+}
+
+/* Status code table highlights */
+.md-typeset table .status-2xx { color: #2e7d32; font-weight: 500; }
+.md-typeset table .status-4xx { color: #ef6c00; font-weight: 500; }
+.md-typeset table .status-5xx { color: #c62828; font-weight: 500; }
