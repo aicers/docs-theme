@@ -6,25 +6,31 @@ documentation.
 ## Repository Structure
 
 ```
-templates/          Template assets grouped by document type
-  manual/           User manual template
-    mkdocs-base.yml   Reference MkDocs config
-    styles/           Browser CSS (lists, PDF print guardrails)
-    pdf/              PDF cover page, SCSS, and fonts
-  api-reference/    API reference template
-  design-doc/       (planned)
-  release-notes/    (planned)
-shared/             Assets shared across all templates
-  fonts/              Roboto and Pretendard web fonts
-  brand.svg           Brand logo
-  styles/             Base CSS
-samples/            Per-template sample sites for previewing
+.github/
+  workflows/
+    docs.yml            GitHub Pages deployment
+templates/              Template assets grouped by document type
+  manual/               User manual template
+    mkdocs-base.yml       Reference MkDocs config
+    styles/               Browser CSS (lists, PDF print guardrails)
+    pdf/                  PDF cover page and SCSS
+  api-reference/        API reference template
+    styles/               Includes api.css for method badges
+    pdf/                  PDF cover page and SCSS
+  design-doc/           (planned)
+  release-notes/        (planned)
+shared/                 Assets shared across all templates
+  fonts/                  Roboto and Pretendard web fonts
+  brand.svg               Brand logo
+  styles/                 Base CSS
+samples/                Per-template sample sites for previewing
+  index.html              Landing page linking to all samples
   api-reference/
   manual/
-scripts/            Build and install helpers
-  fetch-theme.sh      Install a template into a consuming project
-  build-docs-pdf.sh   Generate PDF from an MkDocs project
-  serve-samples.sh    Serve all sample sites at once
+scripts/                Build and install helpers
+  fetch-theme.sh          Install a template into a consuming project
+  build-docs-pdf.sh       Generate PDF from an MkDocs project
+  serve-samples.sh        Serve all sample sites at once
 ```
 
 ## For Docs-Theme Contributors
@@ -142,6 +148,12 @@ The `.theme/.version` file records the installed version.
    ```
 
    PDFs are written to `site/pdf/`.
+
+## GitHub Pages
+
+On merge to `main`, the CI workflow builds all sample sites and
+deploys them to GitHub Pages. The landing page links to each
+template sample.
 
 ## License
 
