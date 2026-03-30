@@ -28,3 +28,5 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Added CI workflow with HTML strict build, PDF build, and shellcheck.
 - Added release workflow to create GitHub Releases from tags using
   CHANGELOG.md.
+
+[Unreleased]: https://github.com/aicers/docs-theme/tree/HEAD
