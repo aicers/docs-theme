@@ -7,8 +7,33 @@ on:
       - main
 
 jobs:
-  check:
-    name: Quality Check
+  build-html:
+    name: Build HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocs-static-i18n
+
+      - name: Build all samples (HTML)
+        run: |
+          for sample_dir in samples/*/; do
+            name="$(basename "$sample_dir")"
+            if [ -f "$sample_dir/mkdocs.yml" ]; then
+              echo "Building $name (HTML)..."
+              mkdocs build -f "$sample_dir/mkdocs.yml" --strict -d "../../site-ci/$name"
+            fi
+          done
+
+  build-pdf:
+    name: Build PDF
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,16 +48,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libcairo2 libffi-dev
           pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
-
-      - name: Build all samples (HTML)
-        run: |
-          for sample_dir in samples/*/; do
-            name="$(basename "$sample_dir")"
-            if [ -f "$sample_dir/mkdocs.yml" ]; then
-              echo "Building $name (HTML)..."
-              mkdocs build -f "$sample_dir/mkdocs.yml" --strict -d "../../site-ci/$name"
-            fi
-          done
 
       - name: Build all samples (PDF)
         run: |
@@ -58,11 +73,21 @@ jobs:
             done
           done
 
-      - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v19
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Lint shell scripts
-        uses: ludeeus/action-shellcheck@master
+      - uses: DavidAnson/markdownlint-cli2-action@v19
+
+  lint-shell:
+    name: Lint Shell Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ludeeus/action-shellcheck@master
         with:
           scandir: scripts
           additional_files: "*.sh"
