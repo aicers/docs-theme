@@ -11,7 +11,7 @@ templates/          Template assets grouped by document type
     mkdocs-base.yml   Reference MkDocs config
     styles/           Browser CSS (lists, PDF print guardrails)
     pdf/              PDF cover page, SCSS, and fonts
-  api-reference/    (planned)
+  api-reference/    API reference template
   design-doc/       (planned)
   release-notes/    (planned)
 shared/             Assets shared across all templates
@@ -19,10 +19,12 @@ shared/             Assets shared across all templates
   brand.svg           Brand logo
   styles/             Base CSS
 samples/            Per-template sample sites for previewing
+  api-reference/
   manual/
 scripts/            Build and install helpers
   fetch-theme.sh      Install a template into a consuming project
   build-docs-pdf.sh   Generate PDF from an MkDocs project
+  serve-samples.sh    Serve all sample sites at once
 ```
 
 ## For Docs-Theme Contributors
@@ -42,16 +44,28 @@ pip install mkdocs-material mkdocs-static-i18n
 
 ### Previewing Changes
 
-Each template has a sample site that can be served locally:
+To serve all sample sites at once:
 
 ```
-cd samples/manual
-mkdocs serve
+./scripts/serve-samples.sh
 ```
 
-This starts a local dev server. The sample documents exercise all
-visual elements (headings, lists, tables, code blocks, admonitions,
-etc.) so you can verify your changes in the browser.
+Each template gets its own port, assigned in alphabetical order:
+
+| Port | Template      |
+|------|---------------|
+| 8000 | api-reference |
+| 8001 | manual        |
+
+To serve a single template:
+
+```
+./scripts/serve-samples.sh manual
+```
+
+The sample documents exercise all visual elements (headings, lists,
+tables, code blocks, admonitions, etc.) so you can verify your
+changes in the browser.
 
 ### Tagging a New Release
 
