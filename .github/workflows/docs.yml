@@ -26,10 +26,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install MkDocs
-        run: pip install mkdocs-material mkdocs-static-i18n
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libcairo2 libffi-dev
+          pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
 
-      - name: Build all samples
+      - name: Build HTML samples
         run: |
           mkdir -p site
           cp samples/index.html site/
@@ -38,6 +41,30 @@ jobs:
             if [ -f "$sample_dir/mkdocs.yml" ]; then
               mkdocs build -f "$sample_dir/mkdocs.yml" -d "../../site/$name"
             fi
+          done
+
+      - name: Build PDFs
+        run: |
+          mkdir -p site/pdf
+          for sample_dir in samples/*/; do
+            name="$(basename "$sample_dir")"
+            if [ ! -f "$sample_dir/mkdocs.yml" ]; then
+              continue
+            fi
+            template_pdf="templates/$name/pdf"
+            if [ ! -d "$template_pdf" ]; then
+              continue
+            fi
+            for locale in en ko; do
+              if [ ! -d "$sample_dir/docs/$locale" ]; then
+                continue
+              fi
+              python3 scripts/ci-build-pdf.py \
+                --sample "$sample_dir" \
+                --template "$name" \
+                --locale "$locale" \
+                --output "site/pdf/${name}.${locale}.pdf"
+            done
           done
 
       - name: Upload Pages Artifact
