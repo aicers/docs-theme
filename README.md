@@ -75,14 +75,18 @@ changes in the browser.
 
 ### Publishing a New Release
 
-Create a GitHub Release for every version. `fetch-theme.sh` uses
-`gh release download`, so a tag alone is not enough.
+1. Add an entry to `CHANGELOG.md` under `## 1.0.0`.
+2. Tag and push:
 
-```
-git tag 1.0.0
-git push origin 1.0.0
-gh release create 1.0.0 --title "1.0.0" --notes "Release notes here"
-```
+   ```
+   git tag 1.0.0
+   git push origin 1.0.0
+   ```
+
+The `release.yml` workflow automatically creates a GitHub Release
+from the tag and extracts release notes from `CHANGELOG.md`.
+`fetch-theme.sh` uses `gh release download`, so the release must
+exist for consumers to install a version.
 
 ## For Consuming Projects
 
