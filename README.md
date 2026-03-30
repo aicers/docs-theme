@@ -5,7 +5,7 @@ documentation.
 
 ## Repository Structure
 
-```
+```text
 .github/
   workflows/
     docs.yml            GitHub Pages deployment
@@ -37,7 +37,7 @@ scripts/                Build and install helpers
 
 ### Prerequisites
 
-```
+```sh
 pip install mkdocs-material mkdocs-static-i18n
 ```
 
@@ -52,7 +52,7 @@ pip install mkdocs-material mkdocs-static-i18n
 
 To serve all sample sites at once:
 
-```
+```sh
 ./scripts/serve-samples.sh
 ```
 
@@ -65,7 +65,7 @@ Each template gets its own port, assigned in alphabetical order:
 
 To serve a single template:
 
-```
+```sh
 ./scripts/serve-samples.sh manual
 ```
 
@@ -78,7 +78,7 @@ changes in the browser.
 1. Add an entry to `CHANGELOG.md` under `## 1.0.0`.
 2. Tag and push:
 
-   ```
+   ```sh
    git tag 1.0.0
    git push origin 1.0.0
    ```
@@ -97,7 +97,7 @@ exist for consumers to install a version.
 
 2. Run it with the desired version and template:
 
-   ```
+   ```sh
    ./scripts/fetch-theme.sh --version 1.0.0 --template manual
    ```
 
@@ -123,7 +123,7 @@ extensions, see `templates/manual/mkdocs-base.yml`.
 
 Update the version argument and re-run:
 
-```
+```sh
 ./scripts/fetch-theme.sh --version 1.1.0 --template manual
 ```
 
@@ -135,13 +135,13 @@ The `.theme/.version` file records the installed version.
 
 2. Install the PDF dependencies:
 
-   ```
+   ```sh
    pip install mkdocs-with-pdf
    ```
 
 3. Run the build for each locale:
 
-   ```
+   ```sh
    ./scripts/build-docs-pdf.sh en
    ./scripts/build-docs-pdf.sh ko
    ```

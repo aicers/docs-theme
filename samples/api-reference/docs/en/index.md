@@ -248,7 +248,7 @@ Retry-After: 30
 
 List endpoints support cursor-based pagination:
 
-```
+```http
 GET /api/v1/customers?limit=20&after=cust_01H8X3YZVK
 ```
 

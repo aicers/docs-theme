@@ -58,6 +58,9 @@ jobs:
             done
           done
 
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v19
+
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
         with:
