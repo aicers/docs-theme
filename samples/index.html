@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>docs-theme — Sample Templates</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0077C8;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: #6b7280;
+      margin-bottom: 48px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 720px;
+      width: 100%;
+    }
+    a.card {
+      display: block;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 32px 28px;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    a.card:hover {
+      border-color: #0077C8;
+      box-shadow: 0 4px 16px rgba(0, 119, 200, 0.12);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .card p {
+      color: #6b7280;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>docs-theme</h1>
+  <p class="subtitle">Sample templates for preview</p>
+  <div class="cards">
+    <a class="card" href="api-reference/">
+      <h2>API Reference</h2>
+      <p>REST endpoints, HTTP method badges, request/response examples, status codes, and rate limiting.</p>
+    </a>
+    <a class="card" href="manual/">
+      <h2>Manual</h2>
+      <p>User manual with headings, lists, tables, code blocks, admonitions, images, and footnotes.</p>
+    </a>
+  </div>
+</body>
+</html>

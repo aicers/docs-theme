@@ -175,10 +175,9 @@ curl -sSL https://example.com/install.sh | bash
 
 ## 이미지 및 도표
 
-<figure markdown="span">
-  ![플레이스홀더 다이어그램](assets/placeholder.svg){ width="100%" }
-  <figcaption>그림 1 — 샘플 아키텍처 다이어그램</figcaption>
-</figure>
+![플레이스홀더 다이어그램](assets/placeholder.svg)
+
+*그림 1 — 샘플 아키텍처 다이어그램*
 
 ---
 
