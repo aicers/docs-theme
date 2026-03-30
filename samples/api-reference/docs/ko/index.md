@@ -247,7 +247,7 @@ Retry-After: 30
 
 목록 엔드포인트는 커서 기반 페이지네이션을 지원합니다:
 
-```
+```http
 GET /api/v1/customers?limit=20&after=cust_01H8X3YZVK
 ```
 
