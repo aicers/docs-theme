@@ -73,20 +73,15 @@ The sample documents exercise all visual elements (headings, lists,
 tables, code blocks, admonitions, etc.) so you can verify your
 changes in the browser.
 
-### Tagging a New Release
+### Publishing a New Release
+
+Create a GitHub Release for every version. `fetch-theme.sh` uses
+`gh release download`, so a tag alone is not enough.
 
 ```
 git tag 1.0.0
 git push origin 1.0.0
-```
-
-Consuming projects reference releases by tag. After pushing, the
-tag is available via `gh release download`.
-
-If this is the first release, create it on GitHub:
-
-```
-gh release create 1.0.0 --title "1.0.0" --notes "Initial release"
+gh release create 1.0.0 --title "1.0.0" --notes "Release notes here"
 ```
 
 ## For Consuming Projects

@@ -18,17 +18,44 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install MkDocs
-        run: pip install mkdocs-material mkdocs-static-i18n
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libcairo2 libffi-dev
+          pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
 
-      - name: Build all samples
+      - name: Build all samples (HTML)
         run: |
           for sample_dir in samples/*/; do
             name="$(basename "$sample_dir")"
             if [ -f "$sample_dir/mkdocs.yml" ]; then
-              echo "Building $name..."
+              echo "Building $name (HTML)..."
               mkdocs build -f "$sample_dir/mkdocs.yml" --strict -d "../../site-ci/$name"
             fi
+          done
+
+      - name: Build all samples (PDF)
+        run: |
+          for sample_dir in samples/*/; do
+            name="$(basename "$sample_dir")"
+            if [ ! -f "$sample_dir/mkdocs.yml" ]; then
+              continue
+            fi
+            template_pdf="templates/$name/pdf"
+            if [ ! -d "$template_pdf" ]; then
+              continue
+            fi
+            for locale in en ko; do
+              if [ ! -d "$sample_dir/docs/$locale" ]; then
+                continue
+              fi
+              echo "Building $name (PDF $locale)..."
+              python3 scripts/ci-build-pdf.py \
+                --sample "$sample_dir" \
+                --template "$name" \
+                --locale "$locale" \
+                --output "site-ci/pdf/${name}.${locale}.pdf"
+            done
           done
 
       - name: Lint shell scripts
