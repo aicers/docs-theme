@@ -33,17 +33,14 @@
       max-width: 720px;
       width: 100%;
     }
-    a.card {
-      display: block;
+    .card {
       background: #fff;
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 32px 28px;
-      text-decoration: none;
-      color: inherit;
       transition: box-shadow 0.15s, border-color 0.15s;
     }
-    a.card:hover {
+    .card:hover {
       border-color: #0077C8;
       box-shadow: 0 4px 16px rgba(0, 119, 200, 0.12);
     }
@@ -52,25 +49,52 @@
       font-weight: 600;
       margin-bottom: 8px;
     }
+    .card h2 a {
+      text-decoration: none;
+      color: inherit;
+    }
+    .card h2 a:hover { color: #0077C8; }
     .card p {
       color: #6b7280;
       font-size: 0.9rem;
       line-height: 1.5;
+      margin-bottom: 12px;
     }
+    .card .links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card .links a {
+      font-size: 0.85rem;
+      color: #0077C8;
+      text-decoration: none;
+    }
+    .card .links a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <h1>docs-theme</h1>
   <p class="subtitle">Sample templates for preview</p>
   <div class="cards">
-    <a class="card" href="api-reference/">
-      <h2>API Reference</h2>
+    <div class="card">
+      <h2><a href="api-reference/">API Reference</a></h2>
       <p>REST endpoints, HTTP method badges, request/response examples, status codes, and rate limiting.</p>
-    </a>
-    <a class="card" href="manual/">
-      <h2>Manual</h2>
+      <div class="links">
+        <a href="api-reference/">Browse</a>
+        <a href="pdf/api-reference.en.pdf">PDF (EN)</a>
+        <a href="pdf/api-reference.ko.pdf">PDF (KO)</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2><a href="manual/">Manual</a></h2>
       <p>User manual with headings, lists, tables, code blocks, admonitions, images, and footnotes.</p>
-    </a>
+      <div class="links">
+        <a href="manual/">Browse</a>
+        <a href="pdf/manual.en.pdf">PDF (EN)</a>
+        <a href="pdf/manual.ko.pdf">PDF (KO)</a>
+      </div>
+    </div>
   </div>
 </body>
 </html>
