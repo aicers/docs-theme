@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MkDocs
+        run: pip install mkdocs-material mkdocs-static-i18n
+
+      - name: Build all samples
+        run: |
+          for sample_dir in samples/*/; do
+            name="$(basename "$sample_dir")"
+            if [ -f "$sample_dir/mkdocs.yml" ]; then
+              echo "Building $name..."
+              mkdocs build -f "$sample_dir/mkdocs.yml" --strict -d "../../site-ci/$name"
+            fi
+          done
+
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: scripts
+          additional_files: "*.sh"
