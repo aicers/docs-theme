@@ -1,0 +1,16 @@
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="200" rx="8" fill="#f0f4f8" stroke="#d0d7de" stroke-width="1"/>
+  <rect x="40" y="60" width="120" height="80" rx="6" fill="#0077C8" opacity="0.9"/>
+  <text x="100" y="105" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="14" font-weight="500">Service A</text>
+  <rect x="240" y="60" width="120" height="80" rx="6" fill="#0077C8" opacity="0.7"/>
+  <text x="300" y="105" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="14" font-weight="500">Service B</text>
+  <rect x="440" y="60" width="120" height="80" rx="6" fill="#0077C8" opacity="0.5"/>
+  <text x="500" y="105" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="14" font-weight="500">Database</text>
+  <line x1="160" y1="100" x2="240" y2="100" stroke="#0077C8" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="100" x2="440" y2="100" stroke="#0077C8" stroke-width="2" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0077C8"/>
+    </marker>
+  </defs>
+</svg>

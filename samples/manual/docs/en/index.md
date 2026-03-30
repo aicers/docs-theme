@@ -178,7 +178,7 @@ curl -sSL https://example.com/install.sh | bash
 ## Images and Figures
 
 <figure markdown="span">
-  ![Placeholder diagram](https://via.placeholder.com/600x200/0077C8/ffffff?text=Architecture+Diagram){ width="100%" }
+  ![Placeholder diagram](assets/placeholder.svg){ width="100%" }
   <figcaption>Figure 1 — Sample architecture diagram</figcaption>
 </figure>
 
