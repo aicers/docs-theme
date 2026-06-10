@@ -4,6 +4,12 @@ This file documents recent notable changes to this project. The format of this
 file is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Improved generated PDF readability by reducing awkward page breaks, sparse pages, and layout issues around common documentation blocks.
+
 ## [0.1.0] - 2026-03-30
 
 ### Added
@@ -29,4 +35,5 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Added release workflow to create GitHub Releases from tags using
   CHANGELOG.md.
 
+[Unreleased]: https://github.com/aicers/docs-theme/compare/0.1.0...HEAD
 [0.1.0]: https://github.com/aicers/docs-theme/tree/0.1.0

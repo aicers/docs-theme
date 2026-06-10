@@ -285,3 +285,31 @@ article#doc-toc li>a {
   display: inline-block;
   line-height: 0.5;
 }
+
+article:not(#doc-cover):not(#doc-toc) section + section {
+  break-before: auto !important;
+  page-break-before: auto !important;
+  min-height: auto !important;
+}
+
+article:not(#doc-cover):not(#doc-toc) h2,
+article:not(#doc-cover):not(#doc-toc) h3,
+article:not(#doc-cover):not(#doc-toc) h4,
+article:not(#doc-cover):not(#doc-toc) h5 {
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+}
+
+article:not(#doc-cover):not(#doc-toc) table,
+article:not(#doc-cover):not(#doc-toc) pre,
+article:not(#doc-cover):not(#doc-toc) blockquote,
+article:not(#doc-cover):not(#doc-toc) ul,
+article:not(#doc-cover):not(#doc-toc) ol,
+article:not(#doc-cover):not(#doc-toc) div.highlight,
+article:not(#doc-cover):not(#doc-toc) div.tabbed-content--wrap,
+article:not(#doc-cover):not(#doc-toc) div.admonition {
+  break-before: auto !important;
+  page-break-before: auto !important;
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+}
