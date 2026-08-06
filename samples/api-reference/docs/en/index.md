@@ -1,4 +1,7 @@
-<!-- markdownlint-configure-file { "MD033": { "allowed_elements": ["span"] }, "MD046": false } -->
+<!-- markdownlint-configure-file {
+  "MD033": { "allowed_elements": ["span"] },
+  "MD046": false
+} -->
 
 # Sample API Reference
 
