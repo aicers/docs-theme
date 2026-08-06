@@ -26,13 +26,13 @@ Authorization: Bearer <access_token>
 
 #### 쿼리 파라미터
 
-| 이름     | 타입     | 필수 | 설명                                |
-|----------|----------|:----:|-------------------------------------|
-| `page`   | integer  |      | 페이지 번호 (기본값: `1`)            |
-| `limit`  | integer  |      | 페이지당 항목 수 (기본값: `20`)       |
-| `search` | string   |      | 이름 또는 이메일로 필터               |
-| `sort`   | string   |      | 정렬 필드 (`name`, `created_at`)     |
-| `order`  | string   |      | 정렬 방향 (`asc` 또는 `desc`)        |
+| 이름 | 타입 | 필수 | 설명 |
+| --- | --- | :---: | --- |
+| `page` | integer | | 페이지 번호 (기본값: `1`) |
+| `limit` | integer | | 페이지당 항목 수 (기본값: `20`) |
+| `search` | string | | 이름 또는 이메일로 필터 |
+| `sort` | string | | 정렬 필드 (`name`, `created_at`) |
+| `order` | string | | 정렬 방향 (`asc` 또는 `desc`) |
 
 #### 응답
 
@@ -85,11 +85,11 @@ Authorization: Bearer <access_token>
 
 #### 필드
 
-| 이름    | 타입   | 필수 | 설명                                          |
-|---------|--------|:----:|-----------------------------------------------|
-| `name`  | string | 예   | 고객 표시 이름                                 |
-| `email` | string | 예   | 기본 연락처 이메일                              |
-| `plan`  | string |      | 구독 플랜 (`free`, `pro`, `enterprise`)        |
+| 이름 | 타입 | 필수 | 설명 |
+| --- | --- | :---: | --- |
+| `name` | string | 예 | 고객 표시 이름 |
+| `email` | string | 예 | 기본 연락처 이메일 |
+| `plan` | string | | 구독 플랜 (`free`, `pro`, `enterprise`) |
 
 #### 응답
 
@@ -129,9 +129,9 @@ Authorization: Bearer <access_token>
 
 #### 경로 파라미터
 
-| 이름 | 타입   | 설명           |
-|------|--------|----------------|
-| `id` | string | 고객 식별자     |
+| 이름 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | string | 고객 식별자 |
 
 #### 요청 본문
 
@@ -146,7 +146,7 @@ Authorization: Bearer <access_token>
 #### 상태 코드
 
 | 코드 | 설명 |
-|------|------|
+| --- | --- |
 | <span class="status-2xx">200</span> | 고객 업데이트 성공 |
 | <span class="status-4xx">404</span> | 고객을 찾을 수 없음 |
 | <span class="status-4xx">422</span> | 유효성 검사 오류 |
@@ -221,11 +221,11 @@ Authorization: Bearer <access_token>
 
 API는 액세스 토큰당 속도 제한을 적용합니다:
 
-| 플랜       | 요청/분    | 버스트  |
-|-----------|----------:|-------:|
-| Free      |        60 |    100 |
-| Pro       |       600 |  1,000 |
-| Enterprise|     6,000 | 10,000 |
+| 플랜 | 요청/분 | 버스트 |
+| --- | ---: | ---: |
+| Free | 60 | 100 |
+| Pro | 600 | 1,000 |
+| Enterprise | 6,000 | 10,000 |
 
 !!! info
     속도 제한 헤더가 모든 응답에 포함됩니다:

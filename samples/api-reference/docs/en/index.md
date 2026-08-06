@@ -85,11 +85,11 @@ Creates a new customer.
 
 #### Fields
 
-| Name    | Type   | Required | Description                              |
-|---------|--------|:--------:|------------------------------------------|
-| `name`  | string | Yes      | Customer display name                    |
-| `email` | string | Yes      | Primary contact email                    |
-| `plan`  | string |          | Subscription plan (`free`, `pro`, `enterprise`) |
+| Name | Type | Required | Description |
+| --- | --- | :---: | --- |
+| `name` | string | Yes | Customer display name |
+| `email` | string | Yes | Primary contact email |
+| `plan` | string | | Subscription plan (`free`, `pro`, `enterprise`) |
 
 #### Response
 
@@ -146,7 +146,7 @@ Replaces the entire customer resource.
 #### Status Codes
 
 | Code | Description |
-|------|-------------|
+| --- | --- |
 | <span class="status-2xx">200</span> | Customer updated successfully |
 | <span class="status-4xx">404</span> | Customer not found |
 | <span class="status-4xx">422</span> | Validation error |
