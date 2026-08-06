@@ -1,3 +1,5 @@
+<!-- markdownlint-configure-file { "MD007": { "indent": 4 }, "MD046": false } -->
+
 # Sample Manual
 
 This page exercises every visual element supported by the manual

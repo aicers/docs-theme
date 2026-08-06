@@ -1,3 +1,5 @@
+<!-- markdownlint-configure-file { "MD007": { "indent": 4 }, "MD046": false } -->
+
 # 샘플 매뉴얼
 
 이 페이지는 매뉴얼 템플릿이 지원하는 모든 시각 요소를 포함합니다.
