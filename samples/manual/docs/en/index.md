@@ -178,7 +178,6 @@ curl -sSL https://example.com/install.sh | bash
 ## Images and Figures
 
 ![Placeholder diagram](assets/placeholder.svg)
-
 *Figure 1 — Sample architecture diagram*
 
 ---
