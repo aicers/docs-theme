@@ -1,3 +1,5 @@
+<!-- markdownlint-configure-file { "MD033": { "allowed_elements": ["span"] }, "MD046": false } -->
+
 # 샘플 API 레퍼런스
 
 이 페이지는 API 레퍼런스 문서에서 흔히 사용하는 시각 요소를 포함합니다.
