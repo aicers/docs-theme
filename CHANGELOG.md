@@ -24,7 +24,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `build-docs-pdf.sh` takes an optional config path after the locale
   and reads all cover text and the output filename from the config's
   `extra.pdf` block. `extra.pdf_copyright` is replaced by
-  `extra.pdf.copyright` and is now an error.
+  `extra.pdf.copyright` and is now an error. The config it generates
+  for MkDocs goes to a uniquely named scratch file, so a project that
+  already has an `mkdocs.tmp.yml` no longer has it overwritten and
+  deleted.
 - `extra_css` in both `mkdocs-base.yml` files points at `theme/`.
 
 ### Removed

@@ -31,7 +31,8 @@
 #
 # Environment:
 #   DOCS_PDF_DEBUG=1  keep the generated config and .pdf-tmp/ for
-#                     inspection instead of deleting them.
+#                     inspection instead of deleting them, and report
+#                     the path of the generated config on stderr.
 #
 # Font paths in the SCSS are rewritten to absolute file:// URIs so
 # WeasyPrint can resolve them.
@@ -73,7 +74,28 @@ if [[ -x ".venv/bin/mkdocs" ]]; then
   mkdocs_bin=".venv/bin/mkdocs"
 fi
 
-tmp_config="$(dirname "$config")/mkdocs.tmp.yml"
+# The generated config lives beside the caller's config, because MkDocs
+# resolves docs_dir and site_dir relative to the config file.  The name
+# is unique and created with noclobber, so a run never writes over a
+# file the caller already has there -- including the input config
+# itself -- and the exit trap only ever removes a file this run made.
+config_dir="$(dirname "$config")"
+tmp_config=""
+attempt=0
+
+while ((attempt < 100)); do
+  candidate="$config_dir/mkdocs.tmp.$$.$attempt.yml"
+  if (set -o noclobber; : > "$candidate") 2>/dev/null; then
+    tmp_config="$candidate"
+    break
+  fi
+  attempt=$((attempt + 1))
+done
+
+if [[ -z "$tmp_config" ]]; then
+  echo "Could not create a temporary config in $config_dir" >&2
+  exit 1
+fi
 
 trap 'if [[ "${DOCS_PDF_DEBUG:-0}" != "1" ]]; then rm -f "$tmp_config"; rm -rf .pdf-tmp; fi' EXIT
 
@@ -303,5 +325,9 @@ data["plugins"] = plugins
 with open(tmp_config_path, "w", encoding="utf-8") as f:
     yaml.dump(data, f, Dumper=Dumper, sort_keys=False, allow_unicode=True)
 PY
+
+if [[ "${DOCS_PDF_DEBUG:-0}" == "1" ]]; then
+  echo "Generated config: $tmp_config" >&2
+fi
 
 DOCS_PDF_EXPORT=1 "$mkdocs_bin" build -f "$tmp_config"

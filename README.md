@@ -268,8 +268,11 @@ the filename, giving `site/pdf/<output_basename>.<locale>.pdf`.
 `extra.pdf.copyright`; a config still using the old key fails the build
 rather than silently dropping the copyright line.
 
-Set `DOCS_PDF_DEBUG=1` to keep the generated `mkdocs.tmp.yml` and
-`.pdf-tmp/` for inspection.
+The script writes the config it hands to MkDocs to a scratch file next
+to your own config and removes it afterwards. The name is unique per
+run, so it never lands on a file you already have there. Set
+`DOCS_PDF_DEBUG=1` to keep that config and `.pdf-tmp/` for inspection;
+the path of the generated config is then reported on stderr.
 
 ## GitHub Pages
 

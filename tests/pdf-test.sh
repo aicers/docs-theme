@@ -50,6 +50,21 @@ build_pdf() {
   (cd "$project" && ./docs/theme/build-docs-pdf.sh "$@") > /dev/null
 }
 
+# Build with DOCS_PDF_DEBUG=1 and echo the path of the generated config
+# the script kept, so a test can inspect what was handed to MkDocs.  The
+# name is unique per run, so it has to be read back rather than assumed.
+debug_build_pdf() {
+  # debug_build_pdf <project> <locale> [config]
+  local project="$1"
+  shift
+  local log="$WORK/debug-build.log" generated
+  (cd "$project" && DOCS_PDF_DEBUG=1 ./docs/theme/build-docs-pdf.sh "$@") \
+    > /dev/null 2> "$log"
+  generated="$(sed -n 's/^Generated config: //p' "$log" | tail -n 1)"
+  [ -n "$generated" ] || die "the debug build reported no generated config"
+  printf '%s\n' "$project/$generated"
+}
+
 # Read a PDF back as text with every space removed, so an assertion does
 # not depend on where the renderer broke a line.
 pdf_text() {
@@ -243,12 +258,12 @@ markdown_extensions:
       permalink: true
 EOF
 
-DOCS_PDF_DEBUG=1 build_pdf "$full" en mkdocs.tags.yml
+generated="$(debug_build_pdf "$full" en mkdocs.tags.yml)"
 [ -f "$full/site/pdf/fixture-tags.en.pdf" ] \
   || die "the build with an unknown YAML tag produced no PDF"
-grep -q "python/object/apply:pymdownx.slugs.slugify" "$full/mkdocs.tmp.yml" \
+grep -q "python/object/apply:pymdownx.slugs.slugify" "$generated" \
   || die "the unknown YAML tag was dropped from the generated config"
-rm -f "$full/mkdocs.tmp.yml"
+rm -f "$generated"
 rm -rf "$full/.pdf-tmp"
 ok "an unknown YAML tag survives into the generated config"
 
@@ -268,14 +283,14 @@ extra:
     output_basename: fixture-plugin-map
 EOF
 
-DOCS_PDF_DEBUG=1 build_pdf "$full" en mkdocs.plugin-map.yml
+generated="$(debug_build_pdf "$full" en mkdocs.plugin-map.yml)"
 [ -f "$full/site/pdf/fixture-plugin-map.en.pdf" ] \
   || die "the mapping plugins form produced no PDF"
-grep -q "^  search:" "$full/mkdocs.tmp.yml" \
+grep -q "^  search:" "$generated" \
   || die "the mapping plugins form dropped the consumer's plugins"
-grep -q "with-pdf:" "$full/mkdocs.tmp.yml" \
+grep -q "with-pdf:" "$generated" \
   || die "with-pdf was not added to the mapping plugins form"
-rm -f "$full/mkdocs.tmp.yml"
+rm -f "$generated"
 rm -rf "$full/.pdf-tmp"
 
 cat > "$full/mkdocs.plugin-list.yml" <<'EOF'
@@ -287,16 +302,45 @@ extra:
     output_basename: fixture-plugin-list
 EOF
 
-DOCS_PDF_DEBUG=1 build_pdf "$full" en mkdocs.plugin-list.yml
+generated="$(debug_build_pdf "$full" en mkdocs.plugin-list.yml)"
 [ -f "$full/site/pdf/fixture-plugin-list.en.pdf" ] \
   || die "the list plugins form produced no PDF"
-grep -q "^- search$" "$full/mkdocs.tmp.yml" \
+grep -q "^- search$" "$generated" \
   || die "the list plugins form dropped the consumer's plugins"
-grep -q "with-pdf:" "$full/mkdocs.tmp.yml" \
+grep -q "with-pdf:" "$generated" \
   || die "with-pdf was not added to the list plugins form"
-rm -f "$full/mkdocs.tmp.yml"
+rm -f "$generated"
 rm -rf "$full/.pdf-tmp"
 ok "the consumer's plugins survive in both the list and mapping forms"
+
+# --- the generated config never clobbers a caller's file --------------
+# The config path is caller-selectable, so the scratch config the script
+# writes must not be able to land on a file the project already has --
+# least of all the config it was handed, which it would read, overwrite
+# and then delete on exit.
+
+cat > "$full/mkdocs.tmp.yml" <<'EOF'
+site_name: Fixture Collision
+extra:
+  pdf:
+    output_basename: fixture-collision
+EOF
+cp "$full/mkdocs.tmp.yml" "$WORK/collision-config.yml"
+
+build_pdf "$full" en mkdocs.tmp.yml
+[ -f "$full/site/pdf/fixture-collision.en.pdf" ] \
+  || die "a config named mkdocs.tmp.yml produced no PDF"
+[ -f "$full/mkdocs.tmp.yml" ] \
+  || die "the caller's mkdocs.tmp.yml was deleted by the build"
+cmp -s "$full/mkdocs.tmp.yml" "$WORK/collision-config.yml" \
+  || die "the caller's mkdocs.tmp.yml was overwritten by the build"
+
+# The scratch config is still cleaned up when it is not the caller's.
+scratch_left="$(find "$full" -maxdepth 1 -name 'mkdocs.tmp.*.yml' | wc -l)"
+[ "$scratch_left" -eq 0 ] \
+  || die "the generated config was left behind without DOCS_PDF_DEBUG"
+rm -f "$full/mkdocs.tmp.yml"
+ok "the generated config never overwrites a file the caller owns"
 
 # --- output_basename is never a locale map ----------------------------
 
