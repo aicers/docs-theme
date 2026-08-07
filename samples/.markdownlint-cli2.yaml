@@ -1,0 +1,12 @@
+# Rendering requirement, not a style preference. Python-Markdown uses
+# `tab_length = 4`, so a sublist indented by 2 spaces renders as a
+# sibling rather than a child. Every file under this directory is
+# published through MkDocs, so the rule belongs to the directory rather
+# than to the files that happen to nest lists today.
+#
+# Rules that really are file-specific — MD046 for pymdownx content tabs,
+# MD033 for the API-reference badge spans — stay as per-file
+# `markdownlint-configure-file` comments.
+config:
+  MD007:
+    indent: 4
