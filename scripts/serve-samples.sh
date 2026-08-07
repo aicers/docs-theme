@@ -29,6 +29,9 @@ port=$BASE_PORT
 
 filter="${1:-}"
 
+# Lay down each sample's generated docs/theme/ so its INHERIT resolves.
+"$SCRIPT_DIR/install-samples.sh" "$filter"
+
 echo "Starting sample servers..."
 echo ""
 

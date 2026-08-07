@@ -1,17 +1,13 @@
+# Sample site for the api-reference template.
+#
+# The theme is installed into docs/theme/ from the local checkout
+# (fetch-theme.sh --source ..), and this config INHERITs the installed
+# base. The docs/theme/ tree is generated, not committed. Only
+# site-specific keys and the i18n languages live here; everything shared
+# comes from the base.
+INHERIT: docs/theme/mkdocs-base.yml
 site_name: Sample API Reference
 site_description: Sample site for the api-reference template
-
-theme:
-  name: material
-  language: en
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - navigation.tracking
-    - navigation.indexes
-    - search.highlight
-    - search.suggest
-    - content.code.copy
 
 plugins:
   - search
@@ -31,27 +27,3 @@ plugins:
             - Home: index.md
           nav_translations:
             Home: 홈
-
-extra_css:
-  - styles/lists.css
-  - styles/pdf.css
-  - styles/api.css
-
-markdown_extensions:
-  - admonition
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
-  - tables
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.keys
-  - abbr
-  - pymdownx.snippets

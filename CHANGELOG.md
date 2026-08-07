@@ -6,7 +6,33 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 
+### Added
+
+- Both `mkdocs-base.yml` files now carry a self-served browser identity:
+  an indigo palette with a light/dark toggle, `brand.svg` as the header
+  logo and favicon, and `theme.font: false` so no Google Fonts are
+  requested. `shared/styles/base.css` declares `@font-face` for the six
+  shipped woff2 files and sets `--md-text-font: "Pretendard"`, giving
+  Korean body typography served entirely from the site.
+- The base `markdown_extensions` gained a Unicode-aware `toc.slugify`,
+  so Korean headings keep their characters in anchor ids, and a
+  `mermaid` custom fence under `pymdownx.superfences`, so a tagged block
+  renders as a `.mermaid` diagram. `base.css` also carries shared rules
+  that scroll wide tables horizontally and center Mermaid diagrams.
+- Added `scripts/install-samples.sh`, which installs the theme into each
+  sample from the local checkout so the samples build through the same
+  `INHERIT` path a consumer uses.
+
 ### Changed
+
+- Consuming projects now `INHERIT: docs/theme/mkdocs-base.yml` instead
+  of copying settings out of it. The base is the union of what every
+  consumer needs; because MkDocs replaces lists and scalars wholesale on
+  merge, `theme.features`, `markdown_extensions`, `extra_css`, and
+  `exclude_docs` must be defined fully in the base and never partially
+  overridden by a consumer. Both sample sites build through this path
+  against a theme installed from the local checkout; a sample's
+  `docs/theme/` tree is generated, not committed.
 
 - `fetch-theme.sh` now installs into `docs/theme/` instead of
   `docs/.theme/`. MkDocs excludes every dot-prefixed path from the
