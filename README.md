@@ -31,6 +31,9 @@ scripts/                Build and install helpers
   fetch-theme.sh          Install a template into a consuming project
   build-docs-pdf.sh       Generate PDF from an MkDocs project
   serve-samples.sh        Serve all sample sites at once
+tests/                  Fixture-driven checks for the shipped scripts
+  installer-test.sh       fetch-theme.sh, end to end
+  pdf-test.sh             build-docs-pdf.sh, end to end
 ```
 
 ## For Docs-Theme Contributors
@@ -73,14 +76,29 @@ The sample documents exercise all visual elements (headings, lists,
 tables, code blocks, admonitions, etc.) so you can verify your
 changes in the browser.
 
+### Testing the Shipped Scripts
+
+`tests/` builds throwaway fixture projects in a temporary directory and
+runs the consumer-facing scripts against them:
+
+```sh
+./tests/installer-test.sh
+./tests/pdf-test.sh
+```
+
+`installer-test.sh` needs `mkdocs` and reaches no network; the release
+path is driven by a stub `gh`. `pdf-test.sh` additionally needs
+`mkdocs-with-pdf` and `pdftotext` (poppler-utils), which it uses to read
+the rendered covers back. Both run in CI.
+
 ### Publishing a New Release
 
-1. Add an entry to `CHANGELOG.md` under `## 1.0.0`.
-2. Tag and push:
+1. Add an entry to `CHANGELOG.md` under `## <version>`.
+2. Tag and push, using that same version:
 
    ```sh
-   git tag 1.0.0
-   git push origin 1.0.0
+   git tag <version>
+   git push origin <version>
    ```
 
 The `release.yml` workflow automatically creates a GitHub Release
@@ -95,16 +113,41 @@ exist for consumers to install a version.
 1. Copy `scripts/fetch-theme.sh` into your project (e.g. at
    `scripts/fetch-theme.sh`).
 
-2. Run it with the desired version and template:
+2. Describe the theme you want in `docs/theme.toml`:
 
-   ```sh
-   ./scripts/fetch-theme.sh --version 1.0.0 --template manual
+   ```toml
+   [theme]
+   repo = "aicers/docs-theme"
+   template = "manual"
+   version = "0.1.0"
    ```
 
-   This downloads the release, extracts the template assets, and
-   installs them into `docs/.theme/`.
+3. Run the installer with no arguments:
 
-3. Add `docs/.theme/` to `.gitignore` — it is fetched, not committed.
+   ```sh
+   ./scripts/fetch-theme.sh
+   ```
+
+It downloads the release named in `docs/theme.toml` and installs:
+
+| Source in the release archive          | Installed as                   |
+|----------------------------------------|--------------------------------|
+| `templates/<template>/styles/`         | `docs/theme/styles/`           |
+| `templates/<template>/pdf/`            | `docs/theme/pdf/`              |
+| `templates/<template>/mkdocs-base.yml` | `docs/theme/mkdocs-base.yml`   |
+| `shared/styles/base.css`               | `docs/theme/styles/base.css`   |
+| `shared/fonts/`                        | `docs/theme/fonts/`            |
+| `shared/brand.svg`                     | `docs/theme/brand.svg`         |
+| `scripts/build-docs-pdf.sh`            | `docs/theme/build-docs-pdf.sh` |
+
+The install directory must not be dot-prefixed: MkDocs drops every
+dot-prefixed path from the build, so assets installed under one would
+never reach `site/`, however faithfully `extra_css` pointed at them.
+
+`docs/theme/` is the only path the installer replaces. The tree is
+staged first in a uniquely named directory created beside it, which is
+removed when the run ends, so an interrupted install leaves neither a
+half-written `docs/theme/` nor anything else you keep under `docs/`.
 
 ### Wiring mkdocs.yml
 
@@ -112,41 +155,135 @@ Reference the installed assets in your `mkdocs.yml`:
 
 ```yaml
 extra_css:
-  - .theme/styles/lists.css
-  - .theme/styles/pdf.css
+  - theme/styles/base.css
+  - theme/styles/lists.css
+  - theme/styles/pdf.css
 ```
 
 For the full set of recommended theme settings and markdown
-extensions, see `templates/manual/mkdocs-base.yml`.
+extensions, see the installed `docs/theme/mkdocs-base.yml`.
 
 ### Upgrading to a New Version
 
-Update the version argument and re-run:
+Edit `version` in `docs/theme.toml` and re-run the installer:
 
 ```sh
-./scripts/fetch-theme.sh --version 1.1.0 --template manual
+./scripts/fetch-theme.sh
 ```
 
-The `.theme/.version` file records the installed version.
+`docs/theme/.meta` records the installed `repo`, `version`, `template`,
+`digest`, and `source`. A run whose `.meta` agrees with
+`docs/theme.toml` and whose digest still matches the installed files
+exits without downloading anything; any edit, addition, or deletion
+under `docs/theme/` — including a cleared executable bit — triggers a
+reinstall.
+
+### Installing From a Local Checkout
+
+To try theme changes before they are released, install from a checkout
+instead of a release:
+
+```sh
+./scripts/fetch-theme.sh --source ../docs-theme
+```
+
+This reads `template` from `docs/theme.toml` as usual, makes no network
+request, and records `source = "local"` in `docs/theme/.meta`. A
+released install records `source = "release"`; treat a `local` install
+as unpublishable.
+
+The skip check compares the digest of `docs/theme/`, not of the
+checkout, so a re-run after editing the checkout reports a skip. Remove
+`docs/theme/` to pick the new assets up.
 
 ### Building PDF Output
 
-1. Copy `scripts/build-docs-pdf.sh` into your project.
+`build-docs-pdf.sh` arrives with the theme, so there is nothing to copy
+by hand.
 
-2. Install the PDF dependencies:
+1. Install the PDF dependencies:
 
    ```sh
    pip install mkdocs-with-pdf
    ```
 
-3. Run the build for each locale:
+2. Run the build for each locale:
 
    ```sh
-   ./scripts/build-docs-pdf.sh en
-   ./scripts/build-docs-pdf.sh ko
+   ./docs/theme/build-docs-pdf.sh en
+   ./docs/theme/build-docs-pdf.sh ko
    ```
 
    PDFs are written to `site/pdf/`.
+
+The second argument selects the config to build from, which a project
+with more than one needs:
+
+```sh
+./docs/theme/build-docs-pdf.sh en mkdocs.general.yml
+```
+
+It defaults to `mkdocs.yml`. Any other argument shape is a usage error.
+
+#### Cover and Output Configuration
+
+All cover text and the output filename come from an `extra.pdf` block
+in the config being built:
+
+```yaml
+site_name: Bootroot Manual
+
+extra:
+  pdf:
+    cover_title:
+      en: Bootroot Manual
+      ko: Bootroot 설명서
+    cover_subtitle:
+      en: User Manual
+      ko: 사용자 설명서
+    cover_tagline:
+      en: Deploy and operate Bootroot
+      ko: Bootroot 배포 및 운영
+    toc_title:
+      en: Table of contents
+      ko: 목차
+    copyright: Copyright 2026 ClumL Inc.
+    output_basename: bootroot
+```
+
+Every text value is either a plain string used unchanged for every
+locale, or a mapping of locale to string. Above, the four cover strings
+vary by locale while `copyright` is one string that both covers render
+identically.
+
+| Key               | Locale-mapped | Unset falls back to                      |
+|-------------------|---------------|------------------------------------------|
+| `cover_title`     | yes           | `site_name`                              |
+| `cover_subtitle`  | yes           | no subtitle is rendered                  |
+| `cover_tagline`   | yes           | no tagline is rendered                   |
+| `toc_title`       | yes           | `Table of contents`                      |
+| `copyright`       | yes           | the top-level `copyright`, then empty    |
+| `author`          | yes           | the build date, formatted for the locale |
+| `output_basename` | no            | `site_name`, lowercased and hyphenated   |
+
+`output_basename` is always a plain string; the locale is appended to
+the filename, giving `site/pdf/<output_basename>.<locale>.pdf`.
+
+`extra.pdf` is the only source of cover text. `cover_tagline` in
+particular reaches the cover through the top-level `extra` mapping, so a
+`extra.cover_tagline` left over from an earlier setup is not read: it is
+replaced when `extra.pdf.cover_tagline` resolves for the locale being
+built, and removed when it does not.
+
+`extra.pdf_copyright` is no longer read. Move it to
+`extra.pdf.copyright`; a config still using the old key fails the build
+rather than silently dropping the copyright line.
+
+The script writes the config it hands to MkDocs to a scratch file next
+to your own config and removes it afterwards. The name is unique per
+run, so it never lands on a file you already have there. Set
+`DOCS_PDF_DEBUG=1` to keep that config and `.pdf-tmp/` for inspection;
+the path of the generated config is then reported on stderr.
 
 ## GitHub Pages
 

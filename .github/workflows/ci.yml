@@ -73,6 +73,44 @@ jobs:
             done
           done
 
+  test-installer:
+    name: Test Installer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocs-static-i18n
+
+      - name: Install fixture projects with fetch-theme.sh
+        run: ./tests/installer-test.sh
+
+  test-pdf-script:
+    name: Test PDF Script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libcairo2 libffi-dev poppler-utils
+          pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
+
+      - name: Build fixture PDFs with build-docs-pdf.sh
+        run: ./tests/pdf-test.sh
+
   lint-markdown:
     name: Lint Markdown
     runs-on: ubuntu-latest
@@ -90,4 +128,9 @@ jobs:
       - uses: ludeeus/action-shellcheck@master
         with:
           scandir: scripts
+          additional_files: "*.sh"
+
+      - uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: tests
           additional_files: "*.sh"

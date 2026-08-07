@@ -4,6 +4,41 @@ This file documents recent notable changes to this project. The format of this
 file is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- `fetch-theme.sh` now installs into `docs/theme/` instead of
+  `docs/.theme/`. MkDocs excludes every dot-prefixed path from the
+  build, so assets installed under the old path never reached the
+  published site.
+- `fetch-theme.sh` takes no arguments. The repository, template, and
+  version are read from `docs/theme.toml`, which the consuming project
+  commits. `--source <dir>` installs from a local checkout instead of a
+  release and records `source = "local"` in `docs/theme/.meta`.
+- The install set gained `mkdocs-base.yml`, `shared/styles/base.css`,
+  and `build-docs-pdf.sh`, so consumers no longer keep their own copy
+  of the PDF script. `docs/theme/.meta` records the installed `repo`,
+  `version`, `template`, `digest`, and `source`; an unchanged tree is
+  left alone and an edited one is reinstalled. `docs/theme/` is the only
+  path the installer replaces: the tree is staged in a uniquely named
+  directory created beside it, so nothing else the project keeps under
+  `docs/` is removed.
+- `build-docs-pdf.sh` takes an optional config path after the locale
+  and reads all cover text and the output filename from the config's
+  `extra.pdf` block. `extra.pdf_copyright` is replaced by
+  `extra.pdf.copyright` and is now an error. The config it generates
+  for MkDocs goes to a uniquely named scratch file, so a project that
+  already has an `mkdocs.tmp.yml` no longer has it overwritten and
+  deleted. `extra.pdf` is the only source of cover text: a leftover
+  top-level `extra.cover_tagline` no longer renders when
+  `extra.pdf.cover_tagline` is unset for the locale being built.
+- `extra_css` in both `mkdocs-base.yml` files points at `theme/`.
+
+### Removed
+
+- Removed the root `VERSION` file. The git tag is the version.
+
 ## [0.1.0] - 2026-03-30
 
 ### Added
