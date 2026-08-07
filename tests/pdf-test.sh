@@ -342,6 +342,51 @@ scratch_left="$(find "$full" -maxdepth 1 -name 'mkdocs.tmp.*.yml' | wc -l)"
 rm -f "$full/mkdocs.tmp.yml"
 ok "the generated config never overwrites a file the caller owns"
 
+# --- a stale top-level extra.cover_tagline is cleared -----------------
+# cover_tagline reaches the cover through `extra`, which the plugin
+# never overwrites, so an unresolved tagline has to be removed rather
+# than left alone -- otherwise a value the consumer still carries at the
+# top level renders on a cover the contract says has none.
+
+cat > "$full/mkdocs.stale-tagline.yml" <<'EOF'
+site_name: Fixture Stale Tagline
+extra:
+  cover_tagline: Stale Tagline Text
+  pdf:
+    output_basename: fixture-stale-tagline
+EOF
+
+generated="$(debug_build_pdf "$full" en mkdocs.stale-tagline.yml)"
+! grep -q "cover_tagline" "$generated" \
+  || die "the generated config kept a stale extra.cover_tagline"
+rm -f "$generated"
+rm -rf "$full/.pdf-tmp"
+pdf_text "$full/site/pdf/fixture-stale-tagline.en.pdf" > "$WORK/stale.txt"
+excludes "$WORK/stale.txt" "Stale Tagline Text" "stale tagline cover"
+ok "an unset cover_tagline clears a top-level extra.cover_tagline"
+
+# The same holds when cover_tagline is locale-mapped but carries no
+# entry for the locale being built.
+cat > "$full/mkdocs.partial-tagline.yml" <<'EOF'
+site_name: Fixture Partial Tagline
+extra:
+  cover_tagline: Stale Tagline Text
+  pdf:
+    cover_tagline:
+      en: Fresh Tagline EN
+    output_basename: fixture-partial-tagline
+EOF
+
+build_pdf "$full" en mkdocs.partial-tagline.yml
+build_pdf "$full" ko mkdocs.partial-tagline.yml
+pdf_text "$full/site/pdf/fixture-partial-tagline.en.pdf" > "$WORK/partial-en.txt"
+pdf_text "$full/site/pdf/fixture-partial-tagline.ko.pdf" > "$WORK/partial-ko.txt"
+contains "$WORK/partial-en.txt" "Fresh Tagline EN" "en tagline cover"
+excludes "$WORK/partial-en.txt" "Stale Tagline Text" "en tagline cover"
+excludes "$WORK/partial-ko.txt" "Fresh Tagline EN" "ko tagline cover"
+excludes "$WORK/partial-ko.txt" "Stale Tagline Text" "ko tagline cover"
+ok "a locale-mapped cover_tagline with no entry for the locale renders none"
+
 # --- output_basename is never a locale map ----------------------------
 
 cat > "$full/mkdocs.badbasename.yml" <<'EOF'

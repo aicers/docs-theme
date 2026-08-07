@@ -264,6 +264,12 @@ identically.
 `output_basename` is always a plain string; the locale is appended to
 the filename, giving `site/pdf/<output_basename>.<locale>.pdf`.
 
+`extra.pdf` is the only source of cover text. `cover_tagline` in
+particular reaches the cover through the top-level `extra` mapping, so a
+`extra.cover_tagline` left over from an earlier setup is not read: it is
+replaced when `extra.pdf.cover_tagline` resolves for the locale being
+built, and removed when it does not.
+
 `extra.pdf_copyright` is no longer read. Move it to
 `extra.pdf.copyright`; a config still using the old key fails the build
 rather than silently dropping the copyright line.

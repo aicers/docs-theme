@@ -308,10 +308,17 @@ if os.path.isfile(brand_svg):
     options["cover_logo"] = brand_svg
 
 # cover_tagline is not a mkdocs-with-pdf option.  The plugin seeds the
-# cover template context from `extra`, so this is how the value reaches
-# {{ cover_tagline }} in pdf/cover.html.j2.
+# cover template context from `extra` and never overwrites this name, so
+# this is how the value reaches {{ cover_tagline }} in pdf/cover.html.j2
+# -- and why an unresolved tagline has to be removed from `extra` rather
+# than merely left unset: a top-level `extra.cover_tagline` the consumer
+# still carries would otherwise render, in whatever locale it was
+# written in, against a contract that says the cover has no tagline.
 if cover_tagline is not None:
     extra["cover_tagline"] = cover_tagline
+    data["extra"] = extra
+elif "cover_tagline" in extra:
+    del extra["cover_tagline"]
     data["extra"] = extra
 
 if isinstance(plugins, dict):

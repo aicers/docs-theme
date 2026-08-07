@@ -27,7 +27,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `extra.pdf.copyright` and is now an error. The config it generates
   for MkDocs goes to a uniquely named scratch file, so a project that
   already has an `mkdocs.tmp.yml` no longer has it overwritten and
-  deleted.
+  deleted. `extra.pdf` is the only source of cover text: a leftover
+  top-level `extra.cover_tagline` no longer renders when
+  `extra.pdf.cover_tagline` is unset for the locale being built.
 - `extra_css` in both `mkdocs-base.yml` files points at `theme/`.
 
 ### Removed
