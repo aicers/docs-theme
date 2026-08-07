@@ -228,6 +228,27 @@ new_project "$WORK/bad-args"
 expect_failure "$WORK/bad-args" "Usage:" \
   "an unknown option prints usage" --version 1.0.0
 
+new_project "$WORK/path-template" ../shared
+expect_failure "$WORK/path-template" "theme.template" \
+  "a path as the template name is rejected" --source "$REPO_ROOT"
+
+# shared/styles/base.css installs into the same directory as the
+# template's own styles.  Silently overwriting one with the other is the
+# quiet asset regression the install set must never allow.  The source
+# tree here carries only templates/, shared/, and scripts/, which also
+# confirms the installer needs nothing else from a release archive.
+clash="$WORK/clash-src"
+mkdir -p "$clash"
+tar -cf - -C "$REPO_ROOT" templates shared scripts | tar -xf - -C "$clash"
+printf '/* a template-owned base.css */\n' \
+  > "$clash/templates/manual/styles/base.css"
+new_project "$WORK/clash"
+expect_failure "$WORK/clash" "base.css" \
+  "a template shipping styles/base.css is rejected" --source "$clash"
+[ ! -e "$WORK/clash/docs/theme.tmp" ] \
+  || die "a failed install left its staging directory under docs/"
+ok "a failed install leaves no staging directory behind"
+
 # --- the release path, driven by a stub gh ----------------------------
 # The archive's top-level directory is deliberately not "docs-theme-*":
 # a fork or renamed repository must still install.
@@ -273,6 +294,22 @@ ok "the release and local installs of the same tree share a digest"
 grep -q "skipping" "$WORK/release2.log" \
   || die "the second release run did not skip"
 ok "a second release run skips without downloading"
+
+# --source must reach no network and shell out to no gh at all.
+mkdir -p "$WORK/nogh"
+cat > "$WORK/nogh/gh" <<'EOF'
+#!/usr/bin/env bash
+echo "gh must not be invoked for a --source install" >&2
+exit 1
+EOF
+chmod +x "$WORK/nogh/gh"
+
+new_project "$WORK/epsilon"
+(cd "$WORK/epsilon" && PATH="$WORK/nogh:$PATH" "$FETCH" --source "$REPO_ROOT") \
+  > "$WORK/nogh.log"
+grep -q "^Installed docs-theme 0.1.0 (manual, local)" "$WORK/nogh.log" \
+  || die "--source did not install with a failing gh first on PATH"
+ok "--source installs without invoking gh"
 
 # A local install must not be mistaken for a released one.
 install_into "$WORK/delta" --source "$REPO_ROOT" > "$WORK/relocal.log"

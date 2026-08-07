@@ -232,9 +232,20 @@ def install(src, dest, template, label):
     if not os.path.isdir(template_dir):
         fail(f"template '{template}' not found in {label}")
 
+    # Stage the whole tree first, so a failure part-way through never
+    # leaves a half-installed docs/theme/ -- nor the staging directory,
+    # which sits under docs_dir and would otherwise be published.
     staging = dest + ".tmp"
     shutil.rmtree(staging, ignore_errors=True)
+    try:
+        stage(src, staging, template, template_dir, label)
+        shutil.rmtree(dest, ignore_errors=True)
+        os.replace(staging, dest)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
+
+def stage(src, staging, template, template_dir, label):
     template_styles = os.path.join(template_dir, "styles")
     if not os.path.isdir(template_styles):
         fail(f"template '{template}' in {label} has no styles/ directory")
@@ -273,9 +284,6 @@ def install(src, dest, template, label):
         fail(f"scripts/build-docs-pdf.sh not found in {label}")
     copy_file(pdf_script, os.path.join(staging, "build-docs-pdf.sh"),
               executable=True)
-
-    shutil.rmtree(dest, ignore_errors=True)
-    os.replace(staging, dest)
 
 
 def download(repo, version, workdir):
@@ -328,6 +336,11 @@ def main():
     repo = required(config, args.config, "repo")
     template = required(config, args.config, "template")
     version = required(config, args.config, "version")
+
+    # A template is a directory name under templates/, not a path.
+    if "/" in template or template in (".", ".."):
+        fail(f"{args.config}: 'theme.template' must be a template name such "
+             f"as 'manual', not a path (got '{template}')")
 
     source_kind = "local" if args.source else "release"
     dest = args.dest

@@ -210,6 +210,72 @@ rm -f "$full/mkdocs.tmp.yml"
 rm -rf "$full/.pdf-tmp"
 ok "an unknown YAML tag survives into the generated config"
 
+# --- the consumer's own plugins survive -------------------------------
+# MkDocs accepts `plugins` as a list or as a mapping of name to options.
+# Dropping either form would silently build the PDF without the
+# consumer's plugins -- without i18n, or without whatever generates the
+# content -- which is exactly the kind of quiet regression the script
+# must not introduce.
+
+cat > "$full/mkdocs.plugin-map.yml" <<'EOF'
+site_name: Fixture Plugin Map
+plugins:
+  search: {}
+extra:
+  pdf:
+    output_basename: fixture-plugin-map
+EOF
+
+DOCS_PDF_DEBUG=1 build_pdf "$full" en mkdocs.plugin-map.yml
+[ -f "$full/site/pdf/fixture-plugin-map.en.pdf" ] \
+  || die "the mapping plugins form produced no PDF"
+grep -q "^  search:" "$full/mkdocs.tmp.yml" \
+  || die "the mapping plugins form dropped the consumer's plugins"
+grep -q "with-pdf:" "$full/mkdocs.tmp.yml" \
+  || die "with-pdf was not added to the mapping plugins form"
+rm -f "$full/mkdocs.tmp.yml"
+rm -rf "$full/.pdf-tmp"
+
+cat > "$full/mkdocs.plugin-list.yml" <<'EOF'
+site_name: Fixture Plugin List
+plugins:
+  - search
+extra:
+  pdf:
+    output_basename: fixture-plugin-list
+EOF
+
+DOCS_PDF_DEBUG=1 build_pdf "$full" en mkdocs.plugin-list.yml
+[ -f "$full/site/pdf/fixture-plugin-list.en.pdf" ] \
+  || die "the list plugins form produced no PDF"
+grep -q "^- search$" "$full/mkdocs.tmp.yml" \
+  || die "the list plugins form dropped the consumer's plugins"
+grep -q "with-pdf:" "$full/mkdocs.tmp.yml" \
+  || die "with-pdf was not added to the list plugins form"
+rm -f "$full/mkdocs.tmp.yml"
+rm -rf "$full/.pdf-tmp"
+ok "the consumer's plugins survive in both the list and mapping forms"
+
+# --- output_basename is never a locale map ----------------------------
+
+cat > "$full/mkdocs.badbasename.yml" <<'EOF'
+site_name: Fixture Bad Basename
+extra:
+  pdf:
+    output_basename:
+      en: fixture-en
+      ko: fixture-ko
+EOF
+
+if (cd "$full" && ./docs/theme/build-docs-pdf.sh en mkdocs.badbasename.yml) \
+  > "$WORK/basename.log" 2>&1
+then
+  die "a locale-mapped output_basename should be rejected"
+fi
+grep -q "output_basename" "$WORK/basename.log" \
+  || die "the message does not name output_basename"
+ok "a locale-mapped output_basename is rejected"
+
 # --- the removed extra.pdf_copyright key is called out ----------------
 
 cat > "$full/mkdocs.legacy.yml" <<'EOF'

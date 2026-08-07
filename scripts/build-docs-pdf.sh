@@ -242,9 +242,23 @@ theme = data.get("theme")
 if isinstance(theme, dict):
     theme["font"] = False
 
-for plugin in data.get("plugins") or []:
-    if isinstance(plugin, dict) and "i18n" in plugin:
-        plugin["i18n"]["build_only_locale"] = locale
+# MkDocs accepts `plugins` either as a list of names and single-key
+# mappings or as one mapping of name to options.  Whichever form the
+# consumer wrote is kept, so their own plugins survive into the
+# generated config.
+plugins = data.get("plugins")
+
+# Pin the i18n plugin, if there is one, to the locale being built.
+i18n = None
+if isinstance(plugins, dict):
+    i18n = plugins.get("i18n")
+elif isinstance(plugins, list):
+    for entry in plugins:
+        if isinstance(entry, dict) and "i18n" in entry:
+            i18n = entry["i18n"]
+            break
+if isinstance(i18n, dict):
+    i18n["build_only_locale"] = locale
 
 options = {
     "enabled_if_env": "DOCS_PDF_EXPORT",
@@ -272,10 +286,12 @@ if cover_tagline is not None:
     extra["cover_tagline"] = cover_tagline
     data["extra"] = extra
 
-plugins = data.get("plugins")
-if not isinstance(plugins, list):
-    plugins = []
-plugins.append({"with-pdf": options})
+if isinstance(plugins, dict):
+    plugins["with-pdf"] = options
+elif isinstance(plugins, list):
+    plugins.append({"with-pdf": options})
+else:
+    plugins = [{"with-pdf": options}]
 data["plugins"] = plugins
 
 with open(tmp_config_path, "w", encoding="utf-8") as f:
