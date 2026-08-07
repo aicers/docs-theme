@@ -29,6 +29,7 @@ samples/                Per-template sample sites for previewing
   manual/
 scripts/                Build and install helpers
   fetch-theme.sh          Install a template into a consuming project
+  install-samples.sh      Install the theme into each sample (local source)
   build-docs-pdf.sh       Generate PDF from an MkDocs project
   serve-samples.sh        Serve all sample sites at once
 tests/                  Fixture-driven checks for the shipped scripts
@@ -52,6 +53,23 @@ pip install mkdocs-material mkdocs-static-i18n
    elements are affected.
 
 ### Previewing Changes
+
+Each sample inherits the theme through the same `INHERIT` path a
+consumer uses, so the theme must be installed into the sample first. The
+sample's `docs/theme/` tree is generated, not committed;
+`serve-samples.sh` installs it from this checkout before serving, and
+`install-samples.sh` does the same install step on its own for a plain
+`mkdocs build`.
+
+`serve-samples.sh` reinstalls with `--force` on every run, so your edits
+to a template or shared file always show up. `install-samples.sh` on its
+own skips reinstalling when the already-installed tree is intact — which
+means a plain rerun keeps serving the *old* assets after you edit the
+source. Pass `--force` (or `--clean`) to drop and reinstall:
+
+```sh
+./scripts/install-samples.sh --force
+```
 
 To serve all sample sites at once:
 
@@ -151,17 +169,46 @@ half-written `docs/theme/` nor anything else you keep under `docs/`.
 
 ### Wiring mkdocs.yml
 
-Reference the installed assets in your `mkdocs.yml`:
+Inherit the installed base config rather than copying settings out of
+it. Your `mkdocs.yml` sets only the site-specific keys and inherits
+everything shared — theme, palette, fonts, logo, markdown extensions,
+`extra_css`, and the published-file exclusions:
 
 ```yaml
-extra_css:
-  - theme/styles/base.css
-  - theme/styles/lists.css
-  - theme/styles/pdf.css
+INHERIT: docs/theme/mkdocs-base.yml
+site_name: Example Manual
+repo_url: https://github.com/aicers/example
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages: [...]
 ```
 
-For the full set of recommended theme settings and markdown
-extensions, see the installed `docs/theme/mkdocs-base.yml`.
+MkDocs resolves `INHERIT` relative to the config file's directory and
+deep-merges the base into your config with `mergedeep.merge(parent,
+child)`. A useful side effect: if you forget to install the theme, the
+build fails immediately with `Inherited config file does not exist`
+instead of producing a silently unstyled site.
+
+**Dictionaries merge recursively, but lists and scalars are replaced
+wholesale.** A consumer that sets `theme.features`,
+`markdown_extensions`, `extra_css`, or the `exclude_docs` scalar
+partially silently discards everything the base defined for that key —
+setting `theme.features: [navigation.top]` drops every other feature the
+base provides. So define those four keys **fully in the base only**, and
+never partially override them from a consuming `mkdocs.yml`. Keep the
+site-specific keys — `site_name`, `repo_url`, `nav` — in your own
+config. `plugins` is a list too: the base ships a `search` + `i18n`
+default, and a consumer that needs its own `i18n` languages redefines
+the whole `plugins` list (which replaces the default wholesale), as the
+sample sites do.
+
+The base already wires `extra_css` to the installed stylesheets (base,
+lists, and PDF guardrails, plus `api.css` for the api-reference
+template), so you do not list them yourself. To review the full set of
+inherited settings, read the installed `docs/theme/mkdocs-base.yml`.
 
 ### Upgrading to a New Version
 

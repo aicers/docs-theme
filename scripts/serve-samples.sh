@@ -29,6 +29,15 @@ port=$BASE_PORT
 
 filter="${1:-}"
 
+# Lay down each sample's generated docs/theme/ so its INHERIT resolves.
+# --force reinstalls from source on every serve, so edits to a template
+# or shared file show up in the preview instead of a stale cached tree.
+if [[ -n "$filter" ]]; then
+  "$SCRIPT_DIR/install-samples.sh" --force "$filter"
+else
+  "$SCRIPT_DIR/install-samples.sh" --force
+fi
+
 echo "Starting sample servers..."
 echo ""
 

@@ -1,3 +1,7 @@
 site/
 .pdf-tmp/
 mkdocs.tmp.yml
+
+# The theme installs into a sample's docs/theme/ from the local
+# checkout; that tree is generated, not committed.
+samples/*/docs/theme/

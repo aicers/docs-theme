@@ -196,6 +196,46 @@ coordinates with the package registry to fetch signed artifacts[^2].
 
 ---
 
+## Installation
+
+Jump to the [installation steps](#installation); the same-page link
+exercises heading-anchor generation.
+
+1. Install the theme into `docs/theme/`.
+2. Point `mkdocs.yml` at the base with `INHERIT`.
+3. Build the site.
+
+---
+
+## Diagrams
+
+A fenced block tagged `mermaid` renders as a centered diagram instead of
+a code block.
+
+```mermaid
+graph LR
+  A[Issue] --> B[Agent A]
+  B --> C[Agent B]
+  C --> D[Green CI]
+```
+
+---
+
+## Wide Table
+
+A table wider than its container scrolls horizontally instead of
+overflowing the page.
+
+<!-- markdownlint-disable MD013 -->
+| Service | Region | Version | Replicas | CPU | Memory | Status | Uptime | Owner |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| gateway | us-east-1 | 2.4.0 | 6 | 2000m | 4Gi | Healthy | 99.98% | platform |
+| registry | us-west-2 | 1.8.3 | 3 | 1000m | 2Gi | Healthy | 99.95% | platform |
+| scheduler | eu-central-1 | 0.9.1 | 2 | 500m | 1Gi | Degraded | 99.20% | runtime |
+<!-- markdownlint-enable MD013 -->
+
+---
+
 ## Heading Levels
 
 ### Third-level Heading
