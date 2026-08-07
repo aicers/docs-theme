@@ -17,6 +17,7 @@
 #       cover_subtitle: {en: <subtitle>, ko: <subtitle>}
 #       cover_tagline: {en: <tagline>, ko: <tagline>}
 #       toc_title: {en: <heading>, ko: <heading>}
+#       author: <line under the cover rule>
 #       copyright: <copyright line>
 #       output_basename: <basename>
 #
@@ -25,7 +26,8 @@
 # string; the locale is appended, giving
 # site/pdf/<basename>.<locale>.pdf.  Unset keys fall back to site_name
 # (cover_title), the plugin default (toc_title), the top-level copyright
-# key, or are omitted from the cover.
+# key, the build date formatted for the locale (author), or are omitted
+# from the cover.
 #
 # Environment:
 #   DOCS_PDF_DEBUG=1  keep the generated config and .pdf-tmp/ for

@@ -75,6 +75,28 @@ excludes() {
   esac
 }
 
+contains_either() {
+  # contains_either <haystack file> <needle> <needle> <description>
+  local first second
+  first="$(printf '%s' "$2" | tr -d '[:space:]')"
+  second="$(printf '%s' "$3" | tr -d '[:space:]')"
+  case "$(cat "$1")" in
+    *"$first"*|*"$second"*) ;;
+    *) die "$4: neither '$2' nor '$3' is present" ;;
+  esac
+}
+
+build_date() {
+  # build_date <en|ko> -- the author line the script falls back to.
+  if [ "$1" = en ]; then
+    python3 -c 'import datetime
+print(datetime.datetime.now().strftime("%B %-d, %Y"))'
+  else
+    python3 -c 'import datetime
+print(datetime.datetime.now().strftime("%Y년 %-m월 %-d일"))'
+  fi
+}
+
 # --- a config carrying the full extra.pdf block -----------------------
 
 full="$WORK/full"
@@ -97,6 +119,9 @@ extra:
     toc_title:
       en: Fixture Contents EN
       ko: Fixture Contents KO
+    author:
+      en: Fixture Author EN
+      ko: Fixture Author KO
     copyright: Copyright 2026 ClumL Inc.
     output_basename: fixture-doc
 EOF
@@ -113,14 +138,18 @@ ok "the output filename follows extra.pdf.output_basename"
 pdf_text "$full/site/pdf/fixture-doc.en.pdf" > "$WORK/en.txt"
 pdf_text "$full/site/pdf/fixture-doc.ko.pdf" > "$WORK/ko.txt"
 
-for setting in Title Subtitle Tagline Contents; do
+for setting in Title Subtitle Tagline Contents Author; do
   contains "$WORK/en.txt" "Fixture $setting EN" "en cover"
   excludes "$WORK/en.txt" "Fixture $setting KO" "en cover"
   contains "$WORK/ko.txt" "Fixture $setting KO" "ko cover"
   excludes "$WORK/ko.txt" "Fixture $setting EN" "ko cover"
 done
-ok "cover_title, cover_subtitle, cover_tagline, and toc_title resolve per locale"
+ok "cover_title, cover_subtitle, cover_tagline, toc_title, and author resolve per locale"
 ok "cover_tagline reaches the cover template through extra"
+
+# A locale-mapped author replaces the build date the cover would
+# otherwise carry.
+excludes "$WORK/en.txt" "$(build_date en)" "en cover"
 
 pdftotext "$full/site/pdf/fixture-doc.en.pdf" - | grep -F "Copyright" \
   > "$WORK/en.copyright"
@@ -143,7 +172,12 @@ site_name: Plain Fixture
 copyright: Copyright 2026 Fallback Owner
 EOF
 
+# The build date the author line falls back to is read either side of
+# the build, so a run that straddles midnight matches one of the two
+# instead of failing.
+en_before="$(build_date en)"
 build_pdf "$plain" en
+en_after="$(build_date en)"
 [ -f "$plain/site/pdf/plain-fixture.en.pdf" ] \
   || die "the output path did not fall back to the site_name slug"
 pdf_text "$plain/site/pdf/plain-fixture.en.pdf" > "$WORK/plain.txt"
@@ -151,6 +185,14 @@ contains "$WORK/plain.txt" "Plain Fixture" "fallback cover"
 contains "$WORK/plain.txt" "Table of contents" "fallback cover"
 contains "$WORK/plain.txt" "Copyright 2026 Fallback Owner" "fallback cover"
 ok "without extra.pdf the cover, toc heading, and output path fall back"
+
+ko_before="$(build_date ko)"
+build_pdf "$plain" ko
+ko_after="$(build_date ko)"
+pdf_text "$plain/site/pdf/plain-fixture.ko.pdf" > "$WORK/plain.ko.txt"
+contains_either "$WORK/plain.txt" "$en_before" "$en_after" "en fallback cover"
+contains_either "$WORK/plain.ko.txt" "$ko_before" "$ko_after" "ko fallback cover"
+ok "an unset author falls back to the build date formatted for the locale"
 
 # --- argument handling ------------------------------------------------
 
