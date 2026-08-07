@@ -20,7 +20,10 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   and `build-docs-pdf.sh`, so consumers no longer keep their own copy
   of the PDF script. `docs/theme/.meta` records the installed `repo`,
   `version`, `template`, `digest`, and `source`; an unchanged tree is
-  left alone and an edited one is reinstalled.
+  left alone and an edited one is reinstalled. `docs/theme/` is the only
+  path the installer replaces: the tree is staged in a uniquely named
+  directory created beside it, so nothing else the project keeps under
+  `docs/` is removed.
 - `build-docs-pdf.sh` takes an optional config path after the locale
   and reads all cover text and the output filename from the config's
   `extra.pdf` block. `extra.pdf_copyright` is replaced by

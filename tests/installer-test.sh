@@ -243,11 +243,29 @@ tar -cf - -C "$REPO_ROOT" templates shared scripts | tar -xf - -C "$clash"
 printf '/* a template-owned base.css */\n' \
   > "$clash/templates/manual/styles/base.css"
 new_project "$WORK/clash"
+# The installer owns docs/theme/ and nothing else beside it: a path the
+# project already keeps under docs/ must survive an install, and the
+# staging directory must not survive a failed one.
+mkdir -p "$WORK/clash/docs/theme.tmp"
+printf 'owned by the project\n' > "$WORK/clash/docs/theme.tmp/owned.txt"
 expect_failure "$WORK/clash" "base.css" \
   "a template shipping styles/base.css is rejected" --source "$clash"
-[ ! -e "$WORK/clash/docs/theme.tmp" ] \
+[ -z "$(find "$WORK/clash/docs" -maxdepth 1 -name 'theme.stage-*' -print -quit)" ] \
   || die "a failed install left its staging directory under docs/"
 ok "a failed install leaves no staging directory behind"
+[ -f "$WORK/clash/docs/theme.tmp/owned.txt" ] \
+  || die "the installer deleted a project-owned path beside docs/theme/"
+ok "a project-owned path beside docs/theme/ survives a failed install"
+
+new_project "$WORK/bystander"
+mkdir -p "$WORK/bystander/docs/theme.tmp"
+printf 'owned by the project\n' > "$WORK/bystander/docs/theme.tmp/owned.txt"
+install_into "$WORK/bystander" --source "$REPO_ROOT" > /dev/null
+[ -f "$WORK/bystander/docs/theme.tmp/owned.txt" ] \
+  || die "the installer deleted a project-owned path beside docs/theme/"
+[ -z "$(find "$WORK/bystander/docs" -maxdepth 1 -name 'theme.stage-*' -print -quit)" ] \
+  || die "a successful install left its staging directory under docs/"
+ok "a project-owned path beside docs/theme/ survives a successful install"
 
 # --- the release path, driven by a stub gh ----------------------------
 # The archive's top-level directory is deliberately not "docs-theme-*":

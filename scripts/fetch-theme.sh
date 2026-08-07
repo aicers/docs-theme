@@ -235,13 +235,24 @@ def install(src, dest, template, label):
     # Stage the whole tree first, so a failure part-way through never
     # leaves a half-installed docs/theme/ -- nor the staging directory,
     # which sits under docs_dir and would otherwise be published.
-    staging = dest + ".tmp"
-    shutil.rmtree(staging, ignore_errors=True)
+    #
+    # mkdtemp picks a name that does not exist yet and creates it
+    # atomically, beside the destination so the final os.replace stays on
+    # one filesystem.  The installer owns only docs/theme/; a fixed
+    # staging name would have to be cleared before use, and clearing it
+    # would delete whatever the project happened to keep there.
+    parent = os.path.dirname(dest) or "."
+    staging = tempfile.mkdtemp(prefix=os.path.basename(dest) + ".stage-",
+                               dir=parent)
     try:
         stage(src, staging, template, template_dir, label)
+        # mkdtemp creates the directory 0o700; the installed tree has to
+        # stay readable to whoever builds the site.
+        os.chmod(staging, 0o755)
         shutil.rmtree(dest, ignore_errors=True)
         os.replace(staging, dest)
     finally:
+        # Only ever the directory this run created.
         shutil.rmtree(staging, ignore_errors=True)
 
 

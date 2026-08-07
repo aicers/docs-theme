@@ -144,6 +144,11 @@ The install directory must not be dot-prefixed: MkDocs drops every
 dot-prefixed path from the build, so assets installed under one would
 never reach `site/`, however faithfully `extra_css` pointed at them.
 
+`docs/theme/` is the only path the installer replaces. The tree is
+staged first in a uniquely named directory created beside it, which is
+removed when the run ends, so an interrupted install leaves neither a
+half-written `docs/theme/` nor anything else you keep under `docs/`.
+
 ### Wiring mkdocs.yml
 
 Reference the installed assets in your `mkdocs.yml`:
