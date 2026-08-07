@@ -21,7 +21,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   that scroll wide tables horizontally and center Mermaid diagrams.
 - Added `scripts/install-samples.sh`, which installs the theme into each
   sample from the local checkout so the samples build through the same
-  `INHERIT` path a consumer uses.
+  `INHERIT` path a consumer uses. It takes a `--force` (`--clean`) flag
+  that drops each sample's generated `docs/theme/` before reinstalling,
+  so edits to a template or shared file are picked up instead of the
+  cached tree `fetch-theme.sh` would otherwise keep. `serve-samples.sh`
+  passes `--force` on every run so the preview always reflects edits.
 
 ### Changed
 

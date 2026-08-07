@@ -61,6 +61,16 @@ sample's `docs/theme/` tree is generated, not committed;
 `install-samples.sh` does the same install step on its own for a plain
 `mkdocs build`.
 
+`serve-samples.sh` reinstalls with `--force` on every run, so your edits
+to a template or shared file always show up. `install-samples.sh` on its
+own skips reinstalling when the already-installed tree is intact — which
+means a plain rerun keeps serving the *old* assets after you edit the
+source. Pass `--force` (or `--clean`) to drop and reinstall:
+
+```sh
+./scripts/install-samples.sh --force
+```
+
 To serve all sample sites at once:
 
 ```sh
