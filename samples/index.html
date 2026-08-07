@@ -71,6 +71,17 @@
       text-decoration: none;
     }
     .card .links a:hover { text-decoration: underline; }
+    footer.provenance {
+      margin-top: 48px;
+      color: #9ca3af;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    footer.provenance a {
+      color: #6b7280;
+      text-decoration: none;
+    }
+    footer.provenance a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -96,5 +107,11 @@
       </div>
     </div>
   </div>
+  <!-- The Docs workflow deploys this site on every push to main, so it
+       shows unreleased state no consumer can yet install. The deploy
+       stamps the revision below so an evaluator knows what they see. -->
+  <footer class="provenance">
+    <span id="build-revision">Preview build from the local working tree</span>
+  </footer>
 </body>
 </html>

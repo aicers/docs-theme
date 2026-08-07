@@ -39,6 +39,15 @@ jobs:
         run: |
           mkdir -p site
           cp samples/index.html site/
+          # This site deploys on every push to main, so it shows
+          # unreleased state no consumer can yet install. Stamp the built
+          # revision onto the landing page so an evaluator is not misled
+          # about what they are looking at.
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          COMMIT_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+          sed -i \
+            "s|<span id=\"build-revision\">Preview build from the local working tree</span>|Built from <a href=\"${COMMIT_URL}\">${SHORT_SHA}</a> on $(date -u +%Y-%m-%d)|" \
+            site/index.html
           for sample_dir in samples/*/; do
             name="$(basename "$sample_dir")"
             if [ -f "$sample_dir/mkdocs.yml" ]; then
