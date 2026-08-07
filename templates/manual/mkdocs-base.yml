@@ -19,8 +19,8 @@ plugins:
       docs_structure: folder
 
 extra_css:
-  - .theme/styles/lists.css
-  - .theme/styles/pdf.css
+  - theme/styles/lists.css
+  - theme/styles/pdf.css
 
 markdown_extensions:
   - admonition
