@@ -377,6 +377,12 @@ def main():
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
 
+    # Check before writing .meta: a .meta recorded over a broken install
+    # would match on the next run and keep the broken install in place.
+    script = os.path.join(dest, "build-docs-pdf.sh")
+    if not os.stat(script).st_mode & stat.S_IXUSR:
+        fail(f"{script} is not executable after install")
+
     write_meta(meta_path, {
         "repo": repo,
         "version": version,
@@ -384,10 +390,6 @@ def main():
         "digest": digest_tree(dest),
         "source": source_kind,
     })
-
-    script = os.path.join(dest, "build-docs-pdf.sh")
-    if not os.stat(script).st_mode & stat.S_IXUSR:
-        fail(f"{script} is not executable after install")
 
     print(f"Installed docs-theme {version} ({template}, {source_kind}) "
           f"into {dest}")

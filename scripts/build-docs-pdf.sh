@@ -171,6 +171,10 @@ if os.path.isdir(theme_fonts):
             shutil.copy2(src, os.path.join(fonts_dest, name))
 
 styles_path = os.path.join(tmp_pdf_dir, "styles.scss")
+if not os.path.isfile(styles_path):
+    fail("docs/theme/pdf/styles.scss not found. The installed template is "
+         "incomplete; re-run ./scripts/fetch-theme.sh.")
+
 fonts_base = f'file://{os.path.join(tmp_pdf_dir, "fonts")}/'
 
 with open(styles_path, "r", encoding="utf-8") as f:

@@ -307,4 +307,26 @@ grep -q "docs/theme/" "$WORK/bare.log" \
   || die "the missing-theme message does not name docs/theme/"
 ok "a missing docs/theme/ exits with an actionable message"
 
+# --- an incomplete install is reported, not crashed on ------------------
+
+partial="$WORK/partial"
+new_project "$partial"
+printf 'site_name: Partial Fixture\n' > "$partial/mkdocs.yml"
+rm -f "$partial/docs/theme/pdf/styles.scss"
+if (cd "$partial" && ./docs/theme/build-docs-pdf.sh en) > "$WORK/partial.log" 2>&1
+then
+  die "a missing styles.scss should be an error"
+fi
+grep -q "styles.scss" "$WORK/partial.log" \
+  || die "the message does not name the missing styles.scss"
+
+rm -rf "$partial/docs/theme/pdf"
+if (cd "$partial" && ./docs/theme/build-docs-pdf.sh en) > "$WORK/nopdf.log" 2>&1
+then
+  die "a missing docs/theme/pdf/ should be an error"
+fi
+grep -q "docs/theme/pdf/" "$WORK/nopdf.log" \
+  || die "the message does not name docs/theme/pdf/"
+ok "an incomplete install exits with an actionable message"
+
 echo "All PDF script checks passed."

@@ -187,6 +187,10 @@ request, and records `source = "local"` in `docs/theme/.meta`. A
 released install records `source = "release"`; treat a `local` install
 as unpublishable.
 
+The skip check compares the digest of `docs/theme/`, not of the
+checkout, so a re-run after editing the checkout reports a skip. Remove
+`docs/theme/` to pick the new assets up.
+
 ### Building PDF Output
 
 `build-docs-pdf.sh` arrives with the theme, so there is nothing to copy
