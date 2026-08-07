@@ -124,6 +124,31 @@ from the tag and extracts release notes from `CHANGELOG.md`.
 `fetch-theme.sh` uses `gh release download`, so the release must
 exist for consumers to install a version.
 
+## Versioning
+
+Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix, matching the
+tag pattern (`[0-9]+.[0-9]+.[0-9]+`) that `release.yml` triggers on.
+Because a single commit here controls every consumer's build and a tag
+becomes a version-bump pull request in each consumer, the number states
+how a release can affect a consumer's build:
+
+- **MAJOR** — removing a markdown extension or theme feature from
+  `mkdocs-base.yml`, renaming or relocating an installed path, or any
+  other change that can break a consumer's build. Consumers must review
+  these against their own documents.
+- **MINOR** — adding a markdown extension, theme feature, or asset.
+- **PATCH** — CSS and PDF adjustments that cannot break a build.
+
+Templates are **not** versioned separately: one repository version covers
+all of them, and the vendored diff in a consumer's bump pull request
+shows whether that consumer is actually affected.
+
+A release is only meaningful when the installed surface actually changed.
+The release workflow rejects a tag whose release surface — everything
+`fetch-theme.sh` installs, plus `fetch-theme.sh` itself — is byte-identical
+to the previous tag's, because such a tag has nothing for consumers to
+fetch and would only produce an empty-diff bump pull request.
+
 ## For Consuming Projects
 
 ### Initial Setup
@@ -166,6 +191,20 @@ never reach `site/`, however faithfully `extra_css` pointed at them.
 staged first in a uniquely named directory created beside it, which is
 removed when the run ends, so an interrupted install leaves neither a
 half-written `docs/theme/` nor anything else you keep under `docs/`.
+
+**Commit the installed `docs/theme/` tree.** It is vendored, not
+git-ignored: committing it makes the theme part of your repository, so
+the site builds reproducibly for anyone who checks the project out and a
+version bump lands as a reviewable diff.
+
+The installer writes `docs/theme/.meta`, which records a `digest` of the
+installed files. Verify the committed tree against that digest by
+re-running the installer: a run whose `.meta` agrees with
+`docs/theme.toml` and whose digest still matches the files on disk exits
+without changing anything, while any edit, addition, or deletion under
+`docs/theme/` is detected and reinstalled. Running `./scripts/fetch-theme.sh`
+in CI is a convenient way to catch a vendored tree that has drifted from
+its `.meta`.
 
 ### Wiring mkdocs.yml
 
@@ -334,9 +373,10 @@ the path of the generated config is then reported on stderr.
 
 ## GitHub Pages
 
-On merge to `main`, the CI workflow builds all sample sites and
-deploys them to GitHub Pages. The landing page links to each
-template sample.
+On merge to `main`, the Docs workflow builds all sample sites and
+deploys them to GitHub Pages. The landing page links to each template
+sample and is stamped with the commit it was built from, since the
+deployed site shows unreleased state that no consumer can yet install.
 
 ## License
 

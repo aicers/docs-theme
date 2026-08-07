@@ -35,6 +35,22 @@ jobs:
             fi
           done
 
+      - name: Verify theme delivery in built sites
+        run: |
+          # --strict fails on broken links, not on a stylesheet or font
+          # that 404s. Assert the theme's assets actually reached each
+          # built site/ directory, reading extra_css and theme.logo from
+          # the resolved config so the check tracks mkdocs-base.yml.
+          for sample_dir in samples/*/; do
+            name="$(basename "$sample_dir")"
+            if [ -f "$sample_dir/mkdocs.yml" ]; then
+              echo "Verifying theme delivery for $name..."
+              python3 scripts/verify-theme-delivery.py \
+                --config "$sample_dir/mkdocs.yml" \
+                --site "site-ci/$name"
+            fi
+          done
+
   build-pdf:
     name: Build PDF
     runs-on: ubuntu-latest

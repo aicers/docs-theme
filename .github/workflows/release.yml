@@ -15,10 +15,21 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+              with:
+                  # The surface guard reads the previous tag's tree, so
+                  # the job needs full history and the tags to resolve and
+                  # read it. actions/checkout is shallow and tagless by
+                  # default, which would let the guard pass while silently
+                  # comparing against nothing.
+                  fetch-depth: 0
+                  fetch-tags: true
 
             - name: Extract version from tag
               id: version
               run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+            - name: Guard release surface
+              run: ./scripts/check-release-surface.sh "${{ steps.version.outputs.version }}"
 
             - name: Extract release notes from CHANGELOG.md
               id: release_notes
