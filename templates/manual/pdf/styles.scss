@@ -285,3 +285,56 @@ article#doc-toc li>a {
   display: inline-block;
   line-height: 0.5;
 }
+
+// Chapters (articles) still start on a new page; subsections flow.
+article:not(#doc-cover):not(#doc-toc) section + section {
+  break-before: auto;
+  page-break-before: auto;
+  min-height: auto;
+}
+
+article:not(#doc-cover):not(#doc-toc) :is(h1, h2, h3, h4, h5, h6) {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+// Only break-inside is relaxed. The inherited break-before: avoid keeps a
+// block attached to the sentence or label that introduces it.
+article:not(#doc-cover):not(#doc-toc) :is(table, pre, blockquote, ul, ol, div.highlight) {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+// A block may split, but never so that one item is stranded on either side.
+// Scoped to top-level lists: chaining the guard through nested lists
+// over-constrains the break and pushes whole blocks to the next page.
+article:not(#doc-cover):not(#doc-toc) :not(li) > :is(ul, ol) > li:nth-child(-n+2) {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+article:not(#doc-cover):not(#doc-toc) :not(li) > :is(ul, ol) > li:nth-last-child(-n+2) {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+article:not(#doc-cover):not(#doc-toc) tbody > tr:nth-child(-n+2) {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+article:not(#doc-cover):not(#doc-toc) tbody > tr:nth-last-child(-n+2) {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+// Bordered containers stay whole; splitting them leaves an open box.
+article:not(#doc-cover):not(#doc-toc) :is(div.admonition, div.tabbed-content--wrap) {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+article:not(#doc-cover):not(#doc-toc) :is(p, li, pre) {
+  orphans: 2;
+  widows: 2;
+}

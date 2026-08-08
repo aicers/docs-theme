@@ -26,6 +26,22 @@ sections that affect its template. Version numbers follow the
   this path against a theme installed from the local checkout; its
   `docs/theme/` tree is generated, not committed.
 - `extra_css` now points at `theme/`.
+- `pdf/styles.scss` no longer forces a page break before every subsection
+  and no longer pads one out to a full page. A nav section whose children
+  are separate pages becomes a single article of stacked `section`
+  elements, and the forced break dropped everything after each one's first
+  paragraph from the PDF, so a chapter's tables, lists, and admonitions
+  went missing without a warning. Top-level chapters still start on a new
+  page.
+- A long table, list, code block, or block quote now splits across pages
+  instead of moving whole and leaving the page it came from half empty.
+  Admonitions and content tabs still move whole, because splitting a
+  bordered box leaves it open at the page edge. A split never strands a
+  lone list item or table row on either side of the break, and a heading
+  or a bold-only label stays with the block it introduces.
+- `styles/pdf.css` now agrees with `pdf/styles.scss` on how a block
+  fragments. The two disagreed, so browser print and PDF export broke a
+  page at different points.
 
 ### api-reference
 
@@ -44,6 +60,22 @@ sections that affect its template. Version numbers follow the
   this path against a theme installed from the local checkout; its
   `docs/theme/` tree is generated, not committed.
 - `extra_css` now points at `theme/` and includes `api.css`.
+- `pdf/styles.scss` no longer forces a page break before every subsection
+  and no longer pads one out to a full page. A nav section whose children
+  are separate pages becomes a single article of stacked `section`
+  elements, and the forced break dropped everything after each one's first
+  paragraph from the PDF, so a chapter's tables, lists, and admonitions
+  went missing without a warning. Top-level chapters still start on a new
+  page.
+- A long table, list, code block, or block quote now splits across pages
+  instead of moving whole and leaving the page it came from half empty.
+  Admonitions and content tabs still move whole, because splitting a
+  bordered box leaves it open at the page edge. A split never strands a
+  lone list item or table row on either side of the break, and a heading
+  or a bold-only label stays with the block it introduces.
+- `styles/pdf.css` now agrees with `pdf/styles.scss` on how a block
+  fragments. The two disagreed, so browser print and PDF export broke a
+  page at different points.
 
 ### shared
 
@@ -86,6 +118,11 @@ sections that affect its template. Version numbers follow the
   `extra.cover_tagline` no longer renders when `extra.pdf.cover_tagline`
   is unset for the locale being built.
 - Removed the root `VERSION` file. The git tag is the version.
+- `pdf-test.sh` builds a nav-grouped fixture and reads the rendered pages
+  back with `pdftotext`, so the chapter content, the chapter page break,
+  the label kept with its list, and the two-row minimum on a split table
+  are each asserted. A PDF build that exits 0 was not evidence the chapter
+  was in the PDF, which is how the dropped content went unnoticed.
 
 ## [0.1.0] - 2026-03-30
 
