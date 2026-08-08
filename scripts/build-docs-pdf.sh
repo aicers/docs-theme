@@ -303,9 +303,24 @@ if cover_subtitle is not None:
 if toc_title is not None:
     options["toc_title"] = toc_title
 
-brand_svg = os.path.join(theme_dir, "brand.svg")
-if os.path.isfile(brand_svg):
-    options["cover_logo"] = brand_svg
+# The cover sits on white paper, so it needs the black-lettering variant.
+# theme/brand.svg is the white-lettering one the site header uses; putting
+# that on the cover renders an invisible logo and nothing downstream would
+# report it.  A consumer documenting a product with its own mark points
+# extra.pdf.cover_logo at it, relative to docs_dir.
+cover_logo = text("cover_logo")
+if cover_logo is not None:
+    docs_dir = str(data.get("docs_dir") or "docs")
+    cover_logo = os.path.join(root, docs_dir, cover_logo)
+    if not os.path.isfile(cover_logo):
+        fail(f"{config_path}: 'extra.pdf.cover_logo' does not exist at "
+             f"{cover_logo}")
+else:
+    cover_logo = os.path.join(theme_dir, "brand-print.svg")
+    if not os.path.isfile(cover_logo):
+        fail(f"{cover_logo} is missing; the installed theme is incomplete. "
+             "Re-run ./scripts/fetch-theme.sh.")
+options["cover_logo"] = cover_logo
 
 # cover_tagline is not a mkdocs-with-pdf option.  The plugin seeds the
 # cover template context from `extra` and never overwrites this name, so

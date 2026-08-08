@@ -7,6 +7,40 @@ Keep a Changelog change-type headings, so a consumer reads only the
 sections that affect its template. Version numbers follow the
 `MAJOR.MINOR.PATCH` policy described in [the README](README.md#versioning).
 
+## Unreleased
+
+### shared
+
+- The brand assets are the **ClumL company mark**, replacing a
+  `brand.svg` that was the Clumit Security product logo — one consumer's
+  product, shipped to every consumer. A project documenting a different
+  product would have published another product's branding.
+- `brand.svg` now carries **white** lettering, for the site header, which
+  sits on the primary-coloured bar. Anything rendering it on a light
+  background needs `brand-print.svg` instead.
+- Added `brand-print.svg`, the black-lettering variant the PDF cover
+  uses, and `brand-symbol.svg`, the cube alone. A wordmark scaled to a
+  16-pixel tab icon is unreadable; the cube is not.
+
+### manual
+
+- `theme.favicon` points at `theme/brand-symbol.svg` rather than the
+  wordmark.
+
+### api-reference
+
+- `theme.favicon` points at `theme/brand-symbol.svg` rather than the
+  wordmark.
+
+### scripts
+
+- `fetch-theme.sh` installs all three brand assets.
+- `build-docs-pdf.sh` takes the cover logo from `brand-print.svg`, and
+  accepts `extra.pdf.cover_logo` — a path relative to `docs_dir` — so a
+  project documenting a product with its own mark can put it on the
+  cover. A path that does not resolve is an error rather than a silent
+  fall back to the company mark.
+
 ## [0.2.0] - 2026-08-08
 
 ### manual

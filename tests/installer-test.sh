@@ -87,6 +87,8 @@ for entry in \
   fonts/Roboto-Regular.woff2 \
   fonts/Pretendard-Regular.woff2 \
   brand.svg \
+  brand-print.svg \
+  brand-symbol.svg \
   build-docs-pdf.sh \
   .meta
 do
