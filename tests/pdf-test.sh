@@ -777,4 +777,44 @@ grep -q "brand-print.svg" "$WORK/no-print-logo.log" \
   || die "the error does not name the missing asset"
 ok "a missing brand-print.svg fails instead of rendering a logo-less cover"
 
+# --- build provenance on the cover --------------------------------------
+
+# A PDF leaves the repository that built it, so the cover records which
+# docs-theme rendered it.  The fixtures install with --source, so this is
+# the local form: naming a version that never resolved a release would
+# assert something untrue.
+prov="$WORK/prov"
+new_project "$prov"
+printf 'site_name: Provenance Fixture\n' > "$prov/mkdocs.yml"
+build_pdf "$prov" en
+build_pdf "$prov" ko
+pdf_text "$prov/site/pdf/provenance-fixture.en.pdf" > "$WORK/prov-en.txt"
+pdf_text "$prov/site/pdf/provenance-fixture.ko.pdf" > "$WORK/prov-ko.txt"
+contains "$WORK/prov-en.txt" "docs-theme(localbuild)" "the en cover"
+contains "$WORK/prov-ko.txt" "docs-theme(로컬빌드)" "the ko cover"
+excludes "$WORK/prov-en.txt" "docs-theme1.2.3" "the en cover"
+ok "a --source build names itself rather than claiming a release version"
+
+# A downloaded install prints the version .meta recorded.  The value is
+# read from .meta and not from docs/theme.toml, so a drifted tree cannot
+# misreport itself.
+sed -i.bak 's/^source = .*/source = "release"/' "$prov/docs/theme/.meta"
+rm -f "$prov/docs/theme/.meta.bak"
+build_pdf "$prov" en
+pdf_text "$prov/site/pdf/provenance-fixture.en.pdf" > "$WORK/prov-release.txt"
+contains "$WORK/prov-release.txt" "docs-theme1.2.3" "the cover of a release build"
+excludes "$WORK/prov-release.txt" "localbuild" "the cover of a release build"
+ok "a release install prints the version recorded in .meta"
+
+# Without .meta there is no provenance to print, and a cover that quietly
+# omits it is the silent asset loss this whole check exists to prevent.
+rm -f "$prov/docs/theme/.meta"
+if (cd "$prov" && ./docs/theme/build-docs-pdf.sh en) > "$WORK/no-meta.log" 2>&1
+then
+  die "a missing .meta should be an error"
+fi
+grep -q "\.meta" "$WORK/no-meta.log" \
+  || die "the error does not name .meta"
+ok "a missing .meta fails instead of dropping the provenance line"
+
 echo "All PDF script checks passed."

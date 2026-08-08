@@ -174,6 +174,39 @@ if not os.path.isdir(theme_dir):
     fail("docs/theme/ not found. Install the theme first:\n"
          "  ./scripts/fetch-theme.sh")
 
+# Which docs-theme rendered this file.  A PDF is handed to a reader and
+# leaves the repository that produced it, so unless the artifact says so
+# there is nothing to reproduce a rendering complaint against -- and once
+# several projects bump the theme on their own schedules, the answer
+# stops being inferable.  .meta is the record of what is installed; the
+# requested value in docs/theme.toml would misreport a drifted tree.
+meta_path = os.path.join(theme_dir, ".meta")
+if not os.path.isfile(meta_path):
+    fail(f"{meta_path} not found. The installed theme is incomplete; "
+         "re-run ./scripts/fetch-theme.sh.")
+
+installed = {}
+with open(meta_path, "r", encoding="utf-8") as f:
+    for line in f:
+        key, sep, value = line.partition("=")
+        if sep:
+            installed[key.strip()] = value.strip().strip('"')
+
+theme_version = installed.get("version")
+theme_source = installed.get("source")
+if not theme_version or not theme_source:
+    fail(f"{meta_path} records no version or source; re-run "
+         "./scripts/fetch-theme.sh.")
+
+# A --source install takes its version from docs/theme.toml without ever
+# resolving a release, so printing that number would assert something
+# untrue.  Name the build instead.
+if theme_source == "release":
+    theme_provenance = f"docs-theme {theme_version}"
+else:
+    theme_provenance = ("docs-theme (local build)" if locale == "en"
+                        else "docs-theme (로컬 빌드)")
+
 theme_pdf = os.path.join(theme_dir, "pdf")
 if not os.path.isdir(theme_pdf):
     fail("docs/theme/pdf/ not found. The installed template ships no PDF "
@@ -335,6 +368,12 @@ if cover_tagline is not None:
 elif "cover_tagline" in extra:
     del extra["cover_tagline"]
     data["extra"] = extra
+
+# theme_provenance reaches {{ theme_provenance }} in pdf/cover.html.j2 the
+# same way, through `extra`.  It is derived from the installed theme, not
+# configured, so a consumer value is overwritten rather than honoured.
+extra["theme_provenance"] = theme_provenance
+data["extra"] = extra
 
 if isinstance(plugins, dict):
     plugins["with-pdf"] = options

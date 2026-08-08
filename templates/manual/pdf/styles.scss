@@ -197,6 +197,19 @@ p.meta {
   color: #71717B;
 }
 
+/* Build provenance: which docs-theme rendered this file.  A PDF leaves
+ * the repository that built it, so without this line there is nothing in
+ * the artifact to reproduce a rendering complaint against. */
+p.meta-provenance {
+  color: #B5B5BC;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  margin: 6px 0 0;
+}
+
 p.meta-copyright {
   color: #9F9FA9;
   font-size: 12px;

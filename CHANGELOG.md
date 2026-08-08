@@ -26,11 +26,17 @@ sections that affect its template. Version numbers follow the
 
 - `theme.favicon` points at `theme/brand-symbol.svg` rather than the
   wordmark.
+- The PDF cover carries a line naming the theme that rendered it. A PDF
+  leaves the repository that produced it, so without it the artifact says
+  nothing about what to reproduce a rendering complaint against.
 
 ### api-reference
 
 - `theme.favicon` points at `theme/brand-symbol.svg` rather than the
   wordmark.
+- The PDF cover carries a line naming the theme that rendered it. A PDF
+  leaves the repository that produced it, so without it the artifact says
+  nothing about what to reproduce a rendering complaint against.
 
 ### scripts
 
@@ -40,6 +46,11 @@ sections that affect its template. Version numbers follow the
   project documenting a product with its own mark can put it on the
   cover. A path that does not resolve is an error rather than a silent
   fall back to the company mark.
+- `build-docs-pdf.sh` reads `docs/theme/.meta` for the cover's provenance
+  line, so a drifted tree cannot misreport itself as a release. A
+  `--source` install renders `docs-theme (local build)` rather than the
+  version it was asked for, which never resolved a release. A missing
+  `.meta` is an error.
 
 ## [0.2.0] - 2026-08-08
 
