@@ -31,7 +31,7 @@ new_project() {
   # new_project <project>
   local project="$1"
   mkdir -p "$project/docs"
-  printf '[theme]\nrepo = "aicers/docs-theme"\ntemplate = "manual"\nversion = "0.1.0"\n' \
+  printf '[theme]\nrepo = "aicers/docs-theme"\ntemplate = "manual"\nversion = "1.2.3"\n' \
     > "$project/docs/theme.toml"
   cat > "$project/docs/index.md" <<'EOF'
 # Fixture Chapter
