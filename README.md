@@ -143,6 +143,16 @@ Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
 shows whether that consumer is actually affected.
 
+While the version is below `1.0.0`, a breaking change bumps MINOR rather
+than MAJOR, and everything else bumps PATCH. The project stays on `0.x`
+until the contract above — the install layout, `docs/theme.toml`,
+`docs/theme/.meta`, the inherited `mkdocs-base.yml`, the `extra.pdf`
+block, and the `build-docs-pdf.sh` interface — has been proven by
+consumers actually adopting it. Until then a breaking change is expected
+often enough that spending MAJOR on one would drain the signal MAJOR is
+meant to carry. `1.0.0` is the point at which "this defines the public
+API" describes what happened rather than what is intended.
+
 A release is only meaningful when the installed surface actually changed.
 The release workflow rejects a tag whose release surface — everything
 `fetch-theme.sh` installs, plus `fetch-theme.sh` itself — is byte-identical
