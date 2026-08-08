@@ -285,10 +285,16 @@ def stage(src, staging, template, template_dir, label):
         fail(f"shared/fonts/ not found in {label}")
     copy_tree(shared_fonts, os.path.join(staging, "fonts"))
 
-    brand = os.path.join(src, "shared", "brand.svg")
-    if not os.path.isfile(brand):
-        fail(f"shared/brand.svg not found in {label}")
-    copy_file(brand, os.path.join(staging, "brand.svg"))
+    # brand.svg carries white lettering for the site header, which sits on
+    # the primary-coloured bar; brand-print.svg is the black-lettering
+    # variant the PDF cover needs on white paper; brand-symbol.svg is the
+    # cube alone, which is the only one of the three that stays legible at
+    # favicon size.
+    for name in ("brand.svg", "brand-print.svg", "brand-symbol.svg"):
+        asset = os.path.join(src, "shared", name)
+        if not os.path.isfile(asset):
+            fail(f"shared/{name} not found in {label}")
+        copy_file(asset, os.path.join(staging, name))
 
     pdf_script = os.path.join(src, "scripts", "build-docs-pdf.sh")
     if not os.path.isfile(pdf_script):

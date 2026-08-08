@@ -21,7 +21,9 @@ templates/              Template assets grouped by document type
   release-notes/        (planned)
 shared/                 Assets shared across all templates
   fonts/                  Roboto and Pretendard web fonts
-  brand.svg               Brand logo
+  brand.svg               ClumL wordmark, white lettering (site header)
+  brand-print.svg         ClumL wordmark, black lettering (PDF cover)
+  brand-symbol.svg        ClumL cube alone (favicon)
   styles/                 Base CSS
 samples/                Per-template sample sites for previewing
   index.html              Landing page linking to all samples
@@ -190,6 +192,8 @@ It downloads the release named in `docs/theme.toml` and installs:
 | `shared/styles/base.css`               | `docs/theme/styles/base.css`   |
 | `shared/fonts/`                        | `docs/theme/fonts/`            |
 | `shared/brand.svg`                     | `docs/theme/brand.svg`         |
+| `shared/brand-print.svg`               | `docs/theme/brand-print.svg`   |
+| `shared/brand-symbol.svg`              | `docs/theme/brand-symbol.svg`  |
 | `scripts/build-docs-pdf.sh`            | `docs/theme/build-docs-pdf.sh` |
 
 The install directory must not be dot-prefixed: MkDocs drops every
@@ -252,6 +256,37 @@ config. `plugins` is a list too: the base ships a `search` + `i18n`
 default, and a consumer that needs its own `i18n` languages redefines
 the whole `plugins` list (which replaces the default wholesale), as the
 sample sites do.
+
+### Branding
+
+The theme ships the **ClumL company mark** in three variants, because one
+file cannot serve all three places. `brand.svg` has white lettering for
+the site header, which sits on the primary-coloured bar. `brand-print.svg`
+has black lettering for the PDF cover, which sits on white paper.
+`brand-symbol.svg` is the cube alone: a wordmark scaled to a 16-pixel tab
+icon is unreadable, and the cube is not. The base wires all three, so a
+project documenting something ClumL publishes needs no branding config at
+all.
+
+A project documenting a product with its own mark overrides them. Commit
+the product's assets under `docs/` — **not** under `docs/theme/`, which
+is covered by the `.meta` digest and reverted on the next installer run:
+
+```yaml
+theme:
+  logo: assets/product-logo.svg
+  favicon: assets/product-symbol.svg
+
+extra:
+  pdf:
+    cover_logo: assets/product-logo-print.svg
+```
+
+`theme` is a mapping, so those two keys merge into the base rather than
+replacing it — the palette, fonts, and features it defines all survive.
+`extra.pdf.cover_logo` is a path relative to `docs_dir`; a path that does
+not resolve is an error rather than a silent fall back to the company
+mark, which would otherwise ship a cover branded with the wrong name.
 
 The base already wires `extra_css` to the installed stylesheets (base,
 lists, and PDF guardrails, plus `api.css` for the api-reference

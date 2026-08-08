@@ -711,4 +711,70 @@ contains "$WORK/tables.txt" "overlong-end" "a row taller than a page"
 contains "$WORK/tables.txt" "after-overlong" "the row after an overlong one"
 ok "a row taller than a page splits rather than losing its content"
 
+# --- the cover logo -----------------------------------------------------
+
+# The cover sits on white paper, so it must carry the black-lettering
+# brand-print.svg.  theme/brand.svg is the white-lettering variant the
+# site header uses; rendering that on the cover produces an invisible
+# logo, which is exactly the kind of silent asset loss nothing else here
+# would catch.
+generated="$(debug_build_pdf "$full" en)"
+grep -q 'cover_logo:.*brand-print\.svg' "$generated" \
+  || die "the cover did not default to brand-print.svg"
+grep -q 'cover_logo:.*brand\.svg' "$generated" \
+  && die "the cover used the white-lettering header logo"
+ok "the cover logo defaults to the print variant, not the header one"
+
+# A consumer documenting a product with its own mark overrides it.  The
+# fixture carries a <text> element so the substitution is observable in
+# the rendered page rather than only in the generated config.
+override="$WORK/override"
+new_project "$override"
+cat > "$override/docs/product-logo.svg" <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 40"><text x="0" y="30" font-size="26">PRODUCTLOGOMARK</text></svg>
+SVG
+cat > "$override/mkdocs.yml" <<'EOF'
+site_name: Override Fixture
+extra:
+  pdf:
+    cover_logo: product-logo.svg
+EOF
+build_pdf "$override" en
+pdf_text "$override/site/pdf/override-fixture.en.pdf" > "$WORK/override.txt"
+contains "$WORK/override.txt" "PRODUCTLOGOMARK" "the overridden cover logo"
+ok "extra.pdf.cover_logo puts a consumer's own mark on the cover"
+
+# A path that does not resolve is an error.  Falling back to the theme
+# logo would hand a consumer a cover branded with the wrong company.
+cat > "$override/mkdocs.missing.yml" <<'EOF'
+site_name: Missing Logo Fixture
+extra:
+  pdf:
+    cover_logo: does-not-exist.svg
+EOF
+if (cd "$override" && ./docs/theme/build-docs-pdf.sh en mkdocs.missing.yml) \
+  > "$WORK/missing-logo.log" 2>&1
+then
+  die "a cover_logo that does not exist should be an error"
+fi
+grep -q "extra.pdf.cover_logo" "$WORK/missing-logo.log" \
+  || die "the error does not name extra.pdf.cover_logo"
+ok "a cover_logo that does not resolve fails instead of falling back"
+
+# An incomplete install is an error for the same reason.  This needs a
+# config without an override, or the override would satisfy the cover and
+# the missing asset would go unnoticed.
+cat > "$override/mkdocs.default.yml" <<'EOF'
+site_name: Default Logo Fixture
+EOF
+rm -f "$override/docs/theme/brand-print.svg"
+if (cd "$override" && ./docs/theme/build-docs-pdf.sh en mkdocs.default.yml) \
+  > "$WORK/no-print-logo.log" 2>&1
+then
+  die "a missing brand-print.svg should be an error"
+fi
+grep -q "brand-print.svg" "$WORK/no-print-logo.log" \
+  || die "the error does not name the missing asset"
+ok "a missing brand-print.svg fails instead of rendering a logo-less cover"
+
 echo "All PDF script checks passed."

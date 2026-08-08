@@ -27,7 +27,7 @@ theme:
   language: en
   font: false
   logo: theme/brand.svg
-  favicon: theme/brand.svg
+  favicon: theme/brand-symbol.svg
   features:
     - navigation.tabs
     - navigation.sections
