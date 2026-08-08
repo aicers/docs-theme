@@ -31,6 +31,8 @@ SURFACE_PATHS=(
   shared/styles/base.css
   shared/fonts
   shared/brand.svg
+  shared/brand-print.svg
+  shared/brand-symbol.svg
   scripts/build-docs-pdf.sh
   scripts/fetch-theme.sh
 )
