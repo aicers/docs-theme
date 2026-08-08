@@ -143,6 +143,11 @@ Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
 shows whether that consumer is actually affected.
 
+While the version is below `1.0.0`, a breaking change bumps MINOR rather
+than MAJOR, and everything else bumps PATCH. The project stays on `0.x`
+until the contract above has been proven by consumers actually adopting
+it.
+
 A release is only meaningful when the installed surface actually changed.
 The release workflow rejects a tag whose release surface — everything
 `fetch-theme.sh` installs, plus `fetch-theme.sh` itself — is byte-identical

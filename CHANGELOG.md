@@ -7,7 +7,7 @@ Keep a Changelog change-type headings, so a consumer reads only the
 sections that affect its template. Version numbers follow the
 `MAJOR.MINOR.PATCH` policy described in [the README](README.md#versioning).
 
-## Unreleased
+## [0.2.0] - 2026-08-08
 
 ### manual
 
@@ -182,4 +182,5 @@ sections that affect its template. Version numbers follow the
 - Added release workflow to create GitHub Releases from tags using
   CHANGELOG.md.
 
+[0.2.0]: https://github.com/aicers/docs-theme/tree/0.2.0
 [0.1.0]: https://github.com/aicers/docs-theme/tree/0.1.0
