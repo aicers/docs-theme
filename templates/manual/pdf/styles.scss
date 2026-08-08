@@ -338,3 +338,57 @@ article:not(#doc-cover):not(#doc-toc) :is(p, li, pre) {
   orphans: 2;
   widows: 2;
 }
+
+// Material draws the table grid with a custom property that only a
+// browser's colour scheme defines. The PDF render never sets one, so the
+// border collapses to nothing and the table arrives as unruled columns of
+// text: the grid has to be drawn here.
+article:not(#doc-cover):not(#doc-toc) table {
+  width: 100%;
+  margin: 12pt 0;
+  border: 1px solid #D8DEE4;
+  border-collapse: collapse;
+}
+
+// A one-column table stretched to the text width is one narrow column of
+// text beside a page of empty cell, so it keeps its content width.
+article:not(#doc-cover):not(#doc-toc) table:not(:has(tr > :nth-child(2))) {
+  width: auto;
+}
+
+article:not(#doc-cover):not(#doc-toc) :is(th, td) {
+  border: 0;
+  border-right: 1px solid #D8DEE4;
+  border-bottom: 1px solid #D8DEE4;
+  padding: 6pt 7pt;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+article:not(#doc-cover):not(#doc-toc) :is(th, td):last-child {
+  border-right: 0;
+}
+
+article:not(#doc-cover):not(#doc-toc) th {
+  background-color: #F6F8FA;
+}
+
+// Only inline code may break mid-token. A long dotted setting name has no
+// break opportunity of its own, and left unbreakable it sets the column's
+// minimum width and squeezes every other column into a ribbon. `anywhere`
+// stays off the cell itself: there it also collapses the cell's minimum
+// width, which chops ordinary words -- a `Default` heading came back as
+// `Defau` / `lt` -- and it costs minutes of layout time on a cell holding
+// a page of prose.
+article:not(#doc-cover):not(#doc-toc) :is(th, td) code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+// A row that splits leaves its cells misaligned across the break, so it
+// moves whole. The table around it still splits, one row at a time; a row
+// too tall for a page of its own splits anyway rather than being dropped.
+article:not(#doc-cover):not(#doc-toc) tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}

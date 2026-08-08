@@ -53,6 +53,31 @@
     widows: 2;
   }
 
+  /* A table row moves whole: split, its cells land misaligned either side
+   * of the break. The table around it still splits, one row at a time.
+   */
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* A long word in a cell wraps instead of widening the column past the
+   * page. Only inline code may break mid-token -- a dotted setting name
+   * has no break opportunity of its own, and left unbreakable it sets the
+   * column's minimum width and squeezes the rest into a ribbon. `anywhere`
+   * stays off the cell itself, where it would also chop ordinary words.
+   */
+  th,
+  td {
+    overflow-wrap: break-word;
+  }
+
+  th code,
+  td code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   img {
     max-width: 100%;
     height: auto;
