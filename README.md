@@ -355,6 +355,22 @@ with more than one needs:
 
 It defaults to `mkdocs.yml`. Any other argument shape is a usage error.
 
+#### Build Provenance
+
+Every cover carries a line naming the theme that rendered it —
+`docs-theme 1.2.3` for a downloaded install. A PDF is handed to a reader
+and leaves the repository that produced it, so without this there is
+nothing in the artifact to reproduce a rendering complaint against, and
+once several projects bump the theme on their own schedules the answer
+stops being inferable.
+
+The value comes from `docs/theme/.meta`, the record of what is installed,
+rather than from the request in `docs/theme.toml` — a hand-edited or
+drifted tree would otherwise misreport itself. A `--source` install has a
+version that never resolved a release, so it prints `docs-theme (local
+build)` instead of a number. It is not configurable, and a missing
+`.meta` is an error rather than a quietly omitted line.
+
 #### Cover and Output Configuration
 
 All cover text and the output filename come from an `extra.pdf` block
