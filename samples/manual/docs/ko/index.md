@@ -1,4 +1,4 @@
-<!-- markdownlint-configure-file { "MD007": { "indent": 4 }, "MD046": false } -->
+<!-- markdownlint-configure-file { "MD046": false } -->
 
 # 샘플 매뉴얼
 
