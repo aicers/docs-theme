@@ -31,7 +31,7 @@ write_config() {
 new_project() {
   # new_project <project> [template] [version]
   local project="$1"
-  write_config "$project" "${2:-manual}" "${3:-0.1.0}"
+  write_config "$project" "${2:-manual}" "${3:-1.2.3}"
   cat > "$project/mkdocs.yml" <<'EOF'
 site_name: Fixture Project
 extra_css:
@@ -74,7 +74,7 @@ command -v mkdocs >/dev/null || die "mkdocs is required to run this test"
 project="$WORK/alpha"
 new_project "$project"
 install_into "$project" --source "$REPO_ROOT" > "$WORK/install.log"
-grep -q "^Installed docs-theme 0.1.0 (manual, local)" "$WORK/install.log" \
+grep -q "^Installed docs-theme 1.2.3 (manual, local)" "$WORK/install.log" \
   || die "first install did not report what it installed"
 
 for entry in \
@@ -102,7 +102,7 @@ for key in repo version template digest source; do
   [ -n "$(meta_value "$project" "$key")" ] || die ".meta has no $key"
 done
 [ "$(meta_value "$project" repo)" = "aicers/docs-theme" ] || die "wrong repo"
-[ "$(meta_value "$project" version)" = "0.1.0" ] || die "wrong version"
+[ "$(meta_value "$project" version)" = "1.2.3" ] || die "wrong version"
 [ "$(meta_value "$project" template)" = "manual" ] || die "wrong template"
 [ "$(meta_value "$project" source)" = "local" ] || die "--source is not local"
 ok ".meta records repo, version, template, digest, and source"
@@ -173,7 +173,7 @@ ok "reinstalling the same source reproduces the digest"
 
 # --- theme.toml drives version and template ---------------------------
 
-write_config "$project" api-reference 0.1.0
+write_config "$project" api-reference 1.2.3
 install_into "$project" --source "$REPO_ROOT" > "$WORK/template.log"
 grep -q "^Installed" "$WORK/template.log" \
   || die "a template change did not reinstall"
@@ -210,7 +210,7 @@ expect_failure "$WORK/no-config" "docs/theme.toml" \
   "a missing docs/theme.toml names the file" --source "$REPO_ROOT"
 
 mkdir -p "$WORK/no-key/docs"
-printf '[theme]\nrepo = "aicers/docs-theme"\nversion = "0.1.0"\n' \
+printf '[theme]\nrepo = "aicers/docs-theme"\nversion = "1.2.3"\n' \
   > "$WORK/no-key/docs/theme.toml"
 expect_failure "$WORK/no-key" "theme.template" \
   "a missing key names the key" --source "$REPO_ROOT"
@@ -296,7 +296,7 @@ chmod +x "$WORK/bin/gh"
 
 new_project "$WORK/delta"
 (cd "$WORK/delta" && PATH="$WORK/bin:$PATH" "$FETCH") > "$WORK/release.log"
-grep -q "^Installed docs-theme 0.1.0 (manual, release)" "$WORK/release.log" \
+grep -q "^Installed docs-theme 1.2.3 (manual, release)" "$WORK/release.log" \
   || die "the release path did not install"
 [ "$(meta_value "$WORK/delta" source)" = "release" ] \
   || die "a downloaded install did not record source = \"release\""
@@ -325,7 +325,7 @@ chmod +x "$WORK/nogh/gh"
 new_project "$WORK/epsilon"
 (cd "$WORK/epsilon" && PATH="$WORK/nogh:$PATH" "$FETCH" --source "$REPO_ROOT") \
   > "$WORK/nogh.log"
-grep -q "^Installed docs-theme 0.1.0 (manual, local)" "$WORK/nogh.log" \
+grep -q "^Installed docs-theme 1.2.3 (manual, local)" "$WORK/nogh.log" \
   || die "--source did not install with a failing gh first on PATH"
 ok "--source installs without invoking gh"
 

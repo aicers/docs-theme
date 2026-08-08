@@ -162,8 +162,12 @@ fetch and would only produce an empty-diff bump pull request.
    [theme]
    repo = "aicers/docs-theme"
    template = "manual"
-   version = "0.1.0"
+   version = "<version>"
    ```
+
+   Use the tag of the release you want to pin to; the
+   [releases page](https://github.com/aicers/docs-theme/releases) lists
+   them.
 
 3. Run the installer with no arguments:
 

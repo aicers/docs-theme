@@ -10,7 +10,7 @@
 #   [theme]
 #   repo = "aicers/docs-theme"
 #   template = "manual"
-#   version = "0.1.0"
+#   version = "<version>"
 #
 # With --source the assets are copied from a local docs-theme checkout
 # instead of being downloaded, and docs/theme/.meta records
@@ -78,7 +78,7 @@ SAMPLE_CONFIG = (
     '  [theme]\n'
     '  repo = "aicers/docs-theme"\n'
     '  template = "manual"\n'
-    '  version = "0.1.0"'
+    '  version = "<version>"'
 )
 
 

@@ -1,4 +1,9 @@
+# install-samples.sh always installs with --source, from this checkout
+# rather than from a release, so `version` is never used to resolve
+# anything. It is deliberately not kept in step with the tags: a real
+# number here would go stale at every release and read as a claim the
+# sample does not make.
 [theme]
 repo = "aicers/docs-theme"
 template = "api-reference"
-version = "0.1.0"
+version = "0.0.0"
