@@ -81,6 +81,21 @@ page_text() {
   pdftotext -f "$2" -l "$2" "$1" - | tr -d '[:space:]'
 }
 
+# Read a PDF back with its line breaks left in, so an assertion can be
+# made about where the renderer broke a word.  Every other reader here
+# strips whitespace, which puts a word the renderer split back together.
+pdf_lines() {
+  pdftotext "$1" -
+}
+
+# Read a PDF back in content order rather than reading order.  A word the
+# renderer split inside a table cell is reunited by this and by nothing
+# else: the default order walks the whole row between the two halves, so
+# stripping whitespace leaves them columns apart.
+pdf_raw_text() {
+  pdftotext -raw "$1" - | tr -d '[:space:]'
+}
+
 page_count() {
   pdfinfo "$1" | sed -n 's/^Pages:[[:space:]]*//p'
 }
@@ -597,5 +612,103 @@ page_text "$paging_pdf" "$first_row_page" > "$WORK/paging-table.txt"
 contains "$WORK/paging-table.txt" "Description of field number 2." \
   "the page the table starts on"
 ok "a split table keeps at least two rows on the page it starts on"
+
+# --- table readability -------------------------------------------------
+# Material draws its table grid with a custom property that only a
+# browser's colour scheme defines, so in the PDF the border resolves to
+# nothing and the rules that redraw it live in `pdf/styles.scss`.  Those
+# same rules decide where a cell wraps, and the wrap points have to be
+# read back rather than assumed: a cell told to break `anywhere` collapses
+# its column to a single character, which chops a `Default` heading into
+# `Defau` / `lt` -- and costs minutes of layout time on a cell holding a
+# page of prose.  Every other reader here strips whitespace, which hides
+# exactly that by gluing a split word back together.
+
+tables="$WORK/tables"
+new_project "$tables"
+cat > "$tables/mkdocs.yml" <<'EOF'
+site_name: Fixture Tables
+extra:
+  pdf:
+    output_basename: fixture-tables
+markdown_extensions:
+  - tables
+EOF
+
+long_setting='ingest.stream.retention_policy_duration_seconds'
+{
+  echo '# Tables'
+  echo
+  echo '| Setting | Default | Description |'
+  echo '| --- | --- | --- |'
+  echo "| \`$long_setting\` | \`604800\` | How long a raw stream record is kept. |"
+  echo
+  # Rows tall enough that a page break has to fall between two of them.
+  echo '| Key | Value |'
+  echo '| --- | --- |'
+  for i in $(seq 1 12); do
+    printf '| rowkey-%s | ' "$i"
+    for s in $(seq 1 14); do
+      printf 'Sentence %s of row %s, padding the row past a few lines. ' "$s" "$i"
+    done
+    printf 'rowend-%s |\n' "$i"
+  done
+  echo
+  # A row too tall for a page of its own has to split rather than be
+  # dropped, and what follows it has to survive.
+  echo '| Key | Value |'
+  echo '| --- | --- |'
+  printf '| overlong | '
+  for s in $(seq 1 320); do
+    printf 'Sentence %s of a row taller than one whole page. ' "$s"
+  done
+  printf 'overlong-end |\n'
+  echo '| after | after-overlong |'
+} > "$tables/docs/index.md"
+
+build_pdf "$tables" en
+tables_pdf="$tables/site/pdf/fixture-tables.en.pdf"
+[ -f "$tables_pdf" ] || die "the table fixture produced no PDF"
+
+pdf_text "$tables_pdf" > "$WORK/tables.txt"
+pdf_lines "$tables_pdf" > "$WORK/tables-lines.txt"
+pdf_raw_text "$tables_pdf" > "$WORK/tables-raw.txt"
+
+# A long setting name has no break opportunity of its own.  Left
+# unbreakable it sets its column's minimum width and squeezes the rest of
+# the row into a ribbon, so it has to wrap -- and still arrive whole.
+contains "$WORK/tables-raw.txt" "$long_setting" "a long setting name"
+if grep -qF "$long_setting" "$WORK/tables-lines.txt"; then
+  die "a long setting name did not wrap inside its cell"
+fi
+ok "a long inline-code value wraps inside its cell and survives whole"
+
+# ...but nothing else in a cell may be broken mid-word.
+grep -qF "Default" "$WORK/tables-lines.txt" \
+  || die "the Default heading was broken mid-word"
+grep -qF "604800" "$WORK/tables-lines.txt" \
+  || die "the 604800 cell value was broken mid-number"
+ok "a heading and a short code value in a cell are not broken mid-word"
+
+# A row that splits leaves its cells misaligned either side of the break,
+# so each row's first and last marker have to share a page.  The rows are
+# tall enough that a page break falls between two of them.
+tables_pages="$(page_count "$tables_pdf")"
+[ "$tables_pages" -ge 4 ] \
+  || die "the table fixture is too short to break a page between rows"
+for i in $(seq 1 12); do
+  key_page="$(page_of "$tables_pdf" "rowkey-$i")" \
+    || die "row $i is not in the PDF"
+  end_page="$(page_of "$tables_pdf" "rowend-$i")" \
+    || die "row $i's last cell is not in the PDF"
+  [ "$key_page" = "$end_page" ] \
+    || die "row $i was split across a page boundary"
+done
+ok "a table row is never split across a page boundary"
+
+# A row taller than a page is the one case where it has to split anyway.
+contains "$WORK/tables.txt" "overlong-end" "a row taller than a page"
+contains "$WORK/tables.txt" "after-overlong" "the row after an overlong one"
+ok "a row taller than a page splits rather than losing its content"
 
 echo "All PDF script checks passed."

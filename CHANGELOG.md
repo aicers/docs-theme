@@ -42,6 +42,20 @@ sections that affect its template. Version numbers follow the
 - `styles/pdf.css` now agrees with `pdf/styles.scss` on how a block
   fragments. The two disagreed, so browser print and PDF export broke a
   page at different points.
+- A PDF table now carries its own grid, header shading, and cell
+  padding. Material draws the grid with a custom property that only a
+  browser's colour scheme defines, so in the PDF it resolved to nothing
+  and a table arrived as unruled columns of text with no way to tell which
+  cell belonged to which row. A single-column table keeps its content
+  width instead of being stretched across the page.
+- A long inline-code value in a cell -- a dotted setting name with no
+  break opportunity of its own -- now wraps instead of setting its
+  column's minimum width and squeezing every other column into a ribbon.
+  Ordinary text in a cell still only breaks between words.
+- A table row now moves whole rather than splitting with its cells
+  misaligned either side of the break. The table around it still splits,
+  one row at a time, and a row too tall for a page of its own splits
+  anyway rather than losing its content.
 
 ### api-reference
 
@@ -76,6 +90,20 @@ sections that affect its template. Version numbers follow the
 - `styles/pdf.css` now agrees with `pdf/styles.scss` on how a block
   fragments. The two disagreed, so browser print and PDF export broke a
   page at different points.
+- A PDF table now carries its own grid, header shading, and cell
+  padding. Material draws the grid with a custom property that only a
+  browser's colour scheme defines, so in the PDF it resolved to nothing
+  and a table arrived as unruled columns of text with no way to tell which
+  cell belonged to which row. A single-column table keeps its content
+  width instead of being stretched across the page.
+- A long inline-code value in a cell -- a dotted setting name with no
+  break opportunity of its own -- now wraps instead of setting its
+  column's minimum width and squeezing every other column into a ribbon.
+  Ordinary text in a cell still only breaks between words.
+- A table row now moves whole rather than splitting with its cells
+  misaligned either side of the break. The table around it still splits,
+  one row at a time, and a row too tall for a page of its own splits
+  anyway rather than losing its content.
 
 ### shared
 
@@ -123,6 +151,11 @@ sections that affect its template. Version numbers follow the
   the label kept with its list, and the two-row minimum on a split table
   are each asserted. A PDF build that exits 0 was not evidence the chapter
   was in the PDF, which is how the dropped content went unnoticed.
+- `pdf-test.sh` also reads a table fixture back with its line breaks
+  left in, so where a cell wrapped is asserted rather than assumed. Every
+  other reader there strips whitespace, which glues a word the renderer
+  split back together and hides a cell whose column collapsed to a single
+  character.
 
 ## [0.1.0] - 2026-03-30
 
