@@ -5,7 +5,7 @@
 #   ./tests/pdf-test.sh
 #
 # Requirements: python3, mkdocs (with mkdocs-material and mkdocs-with-pdf),
-# and pdftotext (poppler-utils) to read the rendered covers back.
+# and pdftotext/pdfinfo (poppler-utils) to read the rendered pages back.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,6 +24,8 @@ die() {
 command -v mkdocs >/dev/null || die "mkdocs is required to run this test"
 command -v pdftotext >/dev/null \
   || die "pdftotext (poppler-utils) is required to run this test"
+command -v pdfinfo >/dev/null \
+  || die "pdfinfo (poppler-utils) is required to run this test"
 
 new_project() {
   # new_project <project>
@@ -69,6 +71,31 @@ debug_build_pdf() {
 # not depend on where the renderer broke a line.
 pdf_text() {
   pdftotext "$1" - | tr -d '[:space:]'
+}
+
+# Read one page of a PDF back the same way, and find the page a marker
+# landed on.  An assertion about what shares a page with what cannot be
+# made against the whole document at once.
+page_text() {
+  # page_text <pdf> <page>
+  pdftotext -f "$2" -l "$2" "$1" - | tr -d '[:space:]'
+}
+
+page_count() {
+  pdfinfo "$1" | sed -n 's/^Pages:[[:space:]]*//p'
+}
+
+page_of() {
+  # page_of <pdf> <needle> -- first page whose text contains needle.
+  local pdf="$1" needle page total
+  needle="$(printf '%s' "$2" | tr -d '[:space:]')"
+  total="$(page_count "$pdf")"
+  for ((page = 1; page <= total; page++)); do
+    case "$(page_text "$pdf" "$page")" in
+      *"$needle"*) printf '%s\n' "$page"; return 0 ;;
+    esac
+  done
+  return 1
 }
 
 contains() {
@@ -459,5 +486,116 @@ fi
 grep -q "docs/theme/pdf/" "$WORK/nopdf.log" \
   || die "the message does not name docs/theme/pdf/"
 ok "an incomplete install exits with an actionable message"
+
+# --- within-chapter pagination ----------------------------------------
+# A nav section whose children are separate pages is rendered as one
+# article of stacked `section` elements.  Forcing a page break before
+# each of those sections dropped everything after the section's first
+# paragraph out of the render, so `mkdocs build` exiting 0 is not
+# evidence the chapter is in the PDF -- the markers have to be read back.
+# The blocks below are each taller than the space left on the page they
+# start on, which is the case that used to lose them.
+
+paging="$WORK/paging"
+new_project "$paging"
+cat > "$paging/mkdocs.yml" <<'EOF'
+site_name: Fixture Paging
+nav:
+  - Home: index.md
+  - Guide:
+      - Overview: guide/overview.md
+      - Reference: guide/reference.md
+extra:
+  pdf:
+    output_basename: fixture-paging
+markdown_extensions:
+  - admonition
+  - tables
+EOF
+
+mkdir -p "$paging/docs/guide"
+cat > "$paging/docs/guide/overview.md" <<'EOF'
+# Overview
+
+A subsection short enough to leave most of its page empty when it is
+padded out to a full one.
+EOF
+
+{
+  echo '# Reference'
+  echo
+  echo 'The first paragraph of the chapter. Everything below it is what a'
+  echo 'forced break used to drop.'
+  echo
+  echo '## Endpoints'
+  echo
+  echo '| Name | Description |'
+  echo '| --- | --- |'
+  for i in $(seq 1 21); do
+    echo "| field-$i | Description of field number $i. |"
+  done
+  echo '| field-omega | The last row of the table. |'
+  echo
+  echo '## Parameters'
+  echo
+  echo '**Key inputs**'
+  echo
+  echo '- first input, which must not be split off from its label.'
+  echo '- second input, which must not be split off either.'
+  for i in $(seq 3 13); do
+    echo "- input number $i, padding the list past the end of the page."
+  done
+  echo '- option-omega, the last item of the list.'
+  echo
+  echo '!!! note'
+  echo '    admonition-omega. A note tall enough to be worth keeping whole:'
+  echo '    line two, line three, line four, and line five of the body.'
+} > "$paging/docs/guide/reference.md"
+
+build_pdf "$paging" en
+paging_pdf="$paging/site/pdf/fixture-paging.en.pdf"
+[ -f "$paging_pdf" ] || die "the nav-grouped fixture produced no PDF"
+
+pdf_text "$paging_pdf" > "$WORK/paging.txt"
+contains "$WORK/paging.txt" "field-omega" "a subsection's table"
+contains "$WORK/paging.txt" "option-omega" "a subsection's list"
+contains "$WORK/paging.txt" "admonition-omega" "a subsection's admonition"
+ok "a chapter's tables, lists, and admonitions survive into the PDF"
+
+# A top-level chapter still starts on a page of its own.
+home_page="$(page_of "$paging_pdf" "Fixture body text")" \
+  || die "the first chapter is not in the PDF"
+guide_page="$(page_of "$paging_pdf" "A subsection short enough")" \
+  || die "the Guide chapter is not in the PDF"
+[ "$guide_page" -gt "$home_page" ] \
+  || die "the Guide chapter did not start after the first chapter"
+ok "a top-level chapter still starts on a new page"
+
+# A subsection flows on instead of being padded out to a full page: the
+# two children of Guide have to share a page somewhere, or the chapter
+# has been padded again.
+reference_page="$(page_of "$paging_pdf" "The first paragraph of the chapter")" \
+  || die "the Reference subsection is not in the PDF"
+[ "$reference_page" -eq "$guide_page" ] \
+  || die "a subsection was padded onto a page of its own"
+ok "a subsection flows on rather than opening a padded page"
+
+# A bold-only label is a heading for the block under it, so the break
+# must not land between them.  This is the "short label almost alone on
+# a page" case: the label keeps at least the first two items with it.
+label_page="$(page_of "$paging_pdf" "Key inputs")" \
+  || die "the bold label is not in the PDF"
+page_text "$paging_pdf" "$label_page" > "$WORK/paging-label.txt"
+contains "$WORK/paging-label.txt" "first input" "the label's page"
+contains "$WORK/paging-label.txt" "second input" "the label's page"
+ok "a bold-only label keeps the first items of its list with it"
+
+# A split table leaves no lone row behind either.
+first_row_page="$(page_of "$paging_pdf" "Description of field number 1.")" \
+  || die "the table's first row is not in the PDF"
+page_text "$paging_pdf" "$first_row_page" > "$WORK/paging-table.txt"
+contains "$WORK/paging-table.txt" "Description of field number 2." \
+  "the page the table starts on"
+ok "a split table keeps at least two rows on the page it starts on"
 
 echo "All PDF script checks passed."
