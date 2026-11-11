@@ -67,10 +67,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # `apt-get update` fails when any source cannot be refreshed instead of
+      # only warning, apt retries each download three times (the hosted image
+      # sets one), and the step gives up after 10 minutes rather than holding
+      # the runner for the job's 6 hours.
       - name: Install dependencies
+        timeout-minutes: 10
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi-dev
+          sudo apt-get update -qq --error-on=any -o Acquire::Retries=3
+          sudo apt-get install -y -qq -o Acquire::Retries=3 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi-dev
           pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
 
       - name: Install theme into samples (local source)
@@ -129,10 +134,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # `apt-get update` fails when any source cannot be refreshed instead of
+      # only warning, apt retries each download three times (the hosted image
+      # sets one), and the step gives up after 10 minutes rather than holding
+      # the runner for the job's 6 hours.
       - name: Install dependencies
+        timeout-minutes: 10
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi-dev poppler-utils
+          sudo apt-get update -qq --error-on=any -o Acquire::Retries=3
+          sudo apt-get install -y -qq -o Acquire::Retries=3 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 libffi-dev poppler-utils
           pip install mkdocs-material mkdocs-static-i18n mkdocs-with-pdf
 
       - name: Build fixture PDFs with build-docs-pdf.sh
