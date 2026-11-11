@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.event_name == 'workflow_dispatch' && '-dispatch' || (github.run_attempt != '1' && format('-rerun-{0}', github.run_id) || '') }}
+  cancel-in-progress: true
 
 jobs:
   build-html:
@@ -133,13 +138,13 @@ jobs:
       - name: Build fixture PDFs with build-docs-pdf.sh
         run: ./tests/pdf-test.sh
 
-  lint-markdown:
-    name: Lint Markdown
+  markdown:
+    name: Markdown
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - uses: DavidAnson/markdownlint-cli2-action@v24
+      - uses: DavidAnson/markdownlint-cli2-action@v25
 
   lint-shell:
     name: Lint Shell Scripts
@@ -156,3 +161,26 @@ jobs:
         with:
           scandir: tests
           additional_files: "*.sh"
+
+  gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: [build-html, build-pdf, test-installer, test-pdf-script, markdown, lint-shell]
+    if: ${{ always() }}
+    steps:
+      - name: Assert every job passed or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "${RESULTS}"
+          bad="$(printf '%s' "${RESULTS}" \
+            | jq -r 'to_entries[]
+                     | select(.value.result != "success" and .value.result != "skipped")
+                     | "  \(.key): \(.value.result)"')"
+          if [ -n "${bad}" ]; then
+            echo "Not green:" >&2
+            echo "${bad}" >&2
+            exit 1
+          fi
