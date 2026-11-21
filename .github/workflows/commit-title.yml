@@ -58,8 +58,12 @@ jobs:
             exit 1
           fi
 
+          # A failing command substitution in a `for` list does not trip
+          # `set -e`, so the range is listed in an assignment first: a Git
+          # error then fails the job instead of leaving the matrix empty.
+          shas=$(git rev-list --first-parent --reverse "$AFTER" "^$BEFORE")
           commits='[]'
-          for sha in $(git rev-list --first-parent --reverse "$AFTER" "^$BEFORE"); do
+          for sha in $shas; do
             parents=$(($(git rev-list --parents -n 1 "$sha" | wc -w) - 1))
             title=$(git show -s --format=%B "$sha" | sed -n 1p)
             commits=$(jq -c \

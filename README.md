@@ -136,8 +136,10 @@ titles of the pull requests merged into `main`:
   release-surface guard described under [Versioning](#versioning) runs
   there.
 - Once CI has passed on the merge commit, release-please tags it
-  `X.Y.Z` and publishes the GitHub Release named `X.Y.Z`, with the
-  generated section as its notes. `fetch-theme.sh` uses
+  `X.Y.Z` and publishes the GitHub Release named `X.Y.Z`. It takes the
+  version from the release pull request's title and the Release notes
+  from the release pull request's description, where it writes the same
+  generated section it adds to `CHANGELOG.md`. `fetch-theme.sh` uses
   `gh release download`, so that published Release is what consumers
   install.
 
@@ -188,15 +190,19 @@ the marker can therefore drop its pull request from the changelog. So a
 pull request description carries no such block and never spells the
 opening marker out.
 
-Before merging the release pull request, check both its title, which
-names the version the merged commits add up to, and its `CHANGELOG.md`
-section against the titles of the pull requests merged since the last
-release. The section holds one entry per merged pull request, except
-that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and again
-under its own section. A body line or an override block that slipped
-through shows up there as a version or an entry no title accounts for;
-an extra entry leaves the version unchanged, so the title alone does
-not reveal it.
+Before merging the release pull request, check its title, which names
+the version the merged commits add up to, and both copies of the
+generated section, the one in its `CHANGELOG.md` and the one in its
+description, against the titles of the pull requests merged since the
+last release. The section holds one entry per merged pull request,
+except that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and
+again under its own section. A body line or an override block that
+slipped through shows up there as a version or an entry no title
+accounts for; an extra entry leaves the version unchanged, so the title
+alone does not reveal it. The description is checked as well because
+the GitHub Release takes its notes from there, not from
+`CHANGELOG.md`: a correction made only in `CHANGELOG.md` would leave
+the published notes as they were.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
