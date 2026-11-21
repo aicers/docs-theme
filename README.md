@@ -238,9 +238,14 @@ except that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and
 again under its own section. A body line, an override block or a marker
 in a title that slipped through shows up there as a version or an entry
 no title accounts for, or as an entry shorter than its title. One that
-adds a breaking entry raises the version; an extra `feat` or `fix` entry,
-or a title cut short, leaves it as it was, so the release pull request's
-title alone does not reveal every one of them. The
+adds a breaking entry raises the version. One that adds an entry no
+higher than the level the merged titles already reach leaves it as it
+was: below 1.0.0, any extra `feat` or `fix` entry, since both raise the
+patch; from 1.0.0 on, an extra `fix` entry, or an extra `feat` entry
+when a title is already `feat`, while an extra `feat` entry in a release
+of fixes alone raises the minor. A title cut short leaves it as it was
+too. So the release pull request's title alone does not reveal every
+one of them. The
 description is checked as well because the GitHub Release takes its
 notes from there, not from `CHANGELOG.md`: a correction made only in
 `CHANGELOG.md` would leave the published notes as they were.
