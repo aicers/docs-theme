@@ -38,22 +38,17 @@ permissions: {}
 
 # One release run at a time, and none cancelled halfway through tagging.
 #
-# A group holds one running and one pending run, and a newly queued run
-# replaces the pending one. So only a run that can act joins `release`:
-# the condition is the `gate` job's, below. A run that acts on nothing
-# (dispatched off `main`, or started by a CI run that failed or was not a
-# push) gets a group of its own, and cannot displace a pending run started
-# by CI passing on a release commit.
+# `queue: max` keeps every pending run instead of only the newest. With
+# the default `queue: single`, a newly queued run replaces the pending
+# one, so a successful rerun of an older commit's CI, or a run that acts
+# on nothing, could displace the pending run for `main`'s head; the older
+# run would then find its commit stale and leave the release pull request
+# behind until another run arrived. Queued runs act in turn, and a run
+# that has nothing to do finishes at once.
 concurrency:
-  group: >-
-    ${{ ((github.event_name == 'workflow_dispatch'
-    && github.ref == 'refs/heads/main')
-    || (github.event_name == 'workflow_run'
-    && github.event.workflow_run.conclusion == 'success'
-    && github.event.workflow_run.event == 'push'))
-    && 'release'
-    || format('release-ignored-{0}', github.run_id) }}
+  group: release
   cancel-in-progress: false
+  queue: max
 
 jobs:
   # Whether a merged release pull request is waiting to be tagged, and if
@@ -67,8 +62,7 @@ jobs:
   # merged release pull request is untagged. The CI run of that merge
   # commit starts a run of its own, and a later run, of a newer commit or
   # dispatched, finds that CI run through the API; so the release is
-  # tagged once it has passed, even if the concurrency group dropped the
-  # run it started.
+  # tagged once it has passed, even if the run it started acted first.
   #
   # `none` skips the release step too, rather than letting it look for
   # itself: a release pull request merged after this check would otherwise
@@ -77,8 +71,7 @@ jobs:
     name: Check CI on the release commit
     # A dispatch acts only on `main`; a CI run only when it was a push to
     # `main` and passed. A failed or cancelled CI run, and a dispatched or
-    # pull-request run of CI, start nothing here. The workflow's
-    # `concurrency` group repeats this condition; keep the two the same.
+    # pull-request run of CI, start nothing here.
     if: >-
       (github.event_name == 'workflow_dispatch'
         && github.ref == 'refs/heads/main')

@@ -173,8 +173,13 @@ does, a `Release-As:` footer sets the version outright, and a body line
 that reads as a Conventional title, such as `feat: add a callout style`,
 becomes a changelog entry of its own. So the body of a squash commit is
 prose and carries none of these: a breaking change is marked by `!` in
-the title alone. The release pull request's title names the version the
-merged commits add up to; check it against their titles before merging.
+the title alone. Before merging the release pull request, check both
+its title, which names the version the merged commits add up to, and
+its `CHANGELOG.md` section, which should hold one entry per merged pull
+request, against those pull requests' titles. A body line that slipped
+through shows up there as a version or an entry no title accounts for;
+an extra entry leaves the version unchanged, so the title alone does
+not reveal it.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
