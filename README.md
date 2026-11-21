@@ -145,6 +145,22 @@ titles of the pull requests merged into `main`:
 
 Nobody pushes a release tag by hand.
 
+The release pull request is opened with `GITHUB_TOKEN`, so `pr-title.yml`
+never runs on it. Instead, the Release workflow's `Validate PR title` job
+posts a commit status of that name on the release pull request's head
+after each run that created or updated it.
+If that job fails before posting, the required status is missing from
+the release pull request. A fresh dispatch of the Release workflow does
+not restore it: release-please leaves an unchanged release pull request
+alone and reports no pull request, so the job is skipped. Re-run the
+failed job of the original run instead (`gh run rerun <run-id>
+--failed`, or "Re-run failed jobs" on the run's page). A re-run keeps
+the outputs of the jobs that succeeded, so the job finds the release
+pull request again and reads its current head and title before posting.
+A re-run is possible for 30 days after the run; failing that, the next
+merge into `main` updates the release pull request and posts the status
+again.
+
 ## Versioning
 
 Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix. Because a

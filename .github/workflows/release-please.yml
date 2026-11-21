@@ -211,6 +211,13 @@ jobs:
   # The release pull request is opened with GITHUB_TOKEN, so it starts no
   # `pull_request_target` run and `pr-title.yml` never checks it. Post the
   # same verdict, under the same name, as a commit status on its head.
+  #
+  # If this job fails before posting, re-run the failed job of this run
+  # (README "Publishing a New Release"). A fresh dispatch skips it:
+  # release-please leaves an unchanged release pull request alone and
+  # gives no `pr` output. A re-run keeps the outputs of the jobs that
+  # succeeded, and the job reads the pull request's current head and
+  # title again.
   title:
     name: Validate PR title
     needs: release-please
