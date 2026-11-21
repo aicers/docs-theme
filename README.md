@@ -234,7 +234,15 @@ coordinator checks its title, which names the version the merged commits
 add up to, and both copies of the generated section, the one in its
 `CHANGELOG.md` and the one in its description, against the titles of the
 pull requests merged since the last release, and corrects the release
-pull request by hand if the version or the notes are wrong. The section
+pull request by hand if the version or the notes are wrong. A corrected
+version goes into every place the release pull request records it: its
+title, the heading and compare link of both copies of the section,
+`version.txt` and `.release-please-manifest.json`, which all hold the
+same version before `release_merge.sh` runs. The tag and the GitHub
+Release take the version from the title, and the next release pull
+request looks for the last release by the version in the manifest, so a
+manifest left at the uncorrected version would not find the release
+actually published. The section
 holds one entry per merged pull request, except that a `!` title is
 listed twice: under `⚠ BREAKING CHANGES` and again under its own
 section. A body line, an override block or a marker in a title that
