@@ -37,6 +37,7 @@ scripts/                Build and install helpers
 tests/                  Fixture-driven checks for the shipped scripts
   installer-test.sh       fetch-theme.sh, end to end
   pdf-test.sh             build-docs-pdf.sh, end to end
+  release-surface-test.sh check-release-surface.sh, on throwaway repos
 ```
 
 ## For Docs-Theme Contributors
@@ -104,35 +105,50 @@ runs the consumer-facing scripts against them:
 ```sh
 ./tests/installer-test.sh
 ./tests/pdf-test.sh
+./tests/release-surface-test.sh
 ```
 
 `installer-test.sh` needs `mkdocs` and reaches no network; the release
 path is driven by a stub `gh`. `pdf-test.sh` additionally needs
 `mkdocs-with-pdf` and `pdftotext` (poppler-utils), which it uses to read
-the rendered covers back. Both run in CI.
+the rendered covers back. `release-surface-test.sh` needs only `git`: it
+builds throwaway repositories and runs the release-surface guard against
+them. All three run in CI.
 
 ### Publishing a New Release
 
-1. Add an entry to `CHANGELOG.md` under `## <version>`.
-2. Tag and push, using that same version:
+Releases are made by
+[release-please](https://github.com/googleapis/release-please) from the
+titles of the pull requests merged into `main`:
 
-   ```sh
-   git tag <version>
-   git push origin <version>
-   ```
+- Every pull request title follows the Conventional title rule (see
+  `AGENTS.md`), and that title becomes the pull request's entry in
+  `CHANGELOG.md`. A pull request does not edit `CHANGELOG.md` itself;
+  the Changelog check fails one that does.
+- After CI passes on `main`, release-please keeps one release pull
+  request open, titled `chore(main): release X.Y.Z`. It collects the
+  titles merged since the last release into a new `CHANGELOG.md`
+  section and bumps the version in `version.txt`. No pull request other
+  than the release pull request changes `version.txt`.
+- The coordinator merges the release pull request with drive-agentcoop's
+  `kit/release_merge.sh`, following its PLAYBOOK's release rule (§3).
+  That dispatches CI on the release pull request's branch first, and the
+  release-surface guard described under [Versioning](#versioning) runs
+  there.
+- Once CI has passed on the merge commit, release-please tags it
+  `X.Y.Z` and publishes the GitHub Release named `X.Y.Z`, with the
+  generated section as its notes. `fetch-theme.sh` uses
+  `gh release download`, so that published Release is what consumers
+  install.
 
-The `release.yml` workflow automatically creates a GitHub Release
-from the tag and extracts release notes from `CHANGELOG.md`.
-`fetch-theme.sh` uses `gh release download`, so the release must
-exist for consumers to install a version.
+Nobody pushes a release tag by hand.
 
 ## Versioning
 
-Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix, matching the
-tag pattern (`[0-9]+.[0-9]+.[0-9]+`) that `release.yml` triggers on.
-Because a single commit here controls every consumer's build and a tag
-becomes a version-bump pull request in each consumer, the number states
-how a release can affect a consumer's build:
+Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix. Because a
+single commit here controls every consumer's build and a release becomes
+a version-bump pull request in each consumer, the number states how a
+release can affect a consumer's build:
 
 - **MAJOR** — removing a markdown extension or theme feature from
   `mkdocs-base.yml`, renaming or relocating an installed path, or any
@@ -141,20 +157,33 @@ how a release can affect a consumer's build:
 - **MINOR** — adding a markdown extension, theme feature, or asset.
 - **PATCH** — CSS and PDF adjustments that cannot break a build.
 
+release-please derives the next version from the pull request titles
+merged since the last release, so the title is where the level is
+decided:
+
+- A change that can break a consumer's build — anything on the MAJOR
+  list above — carries `!` in its title, as in
+  `feat!: drop the admonition extension`.
+- An added extension, theme feature, or asset is `feat`.
+- A CSS or PDF adjustment is `fix`.
+
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
 shows whether that consumer is actually affected.
 
-While the version is below `1.0.0`, a breaking change bumps MINOR rather
-than MAJOR, and everything else bumps PATCH. The project stays on `0.x`
-until the contract above has been proven by consumers actually adopting
-it.
+While the version is below `1.0.0`, a `!` title raises MINOR rather than
+MAJOR, and every other change, `feat` included, raises PATCH. The project
+stays on `0.x` until the contract above has been proven by consumers
+actually adopting it.
 
 A release is only meaningful when the installed surface actually changed.
-The release workflow rejects a tag whose release surface — everything
-`fetch-theme.sh` installs, plus `fetch-theme.sh` itself — is byte-identical
-to the previous tag's, because such a tag has nothing for consumers to
-fetch and would only produce an empty-diff bump pull request.
+The release surface is everything `fetch-theme.sh` installs, plus
+`fetch-theme.sh` itself. A release pull request whose surface is
+byte-identical to the last release's fails the CI dispatched on it before
+it is merged, because such a release has nothing for consumers to fetch
+and would only produce an empty-diff bump pull request. It stays open
+until a change to the surface lands, and release-please then brings it up
+to date.
 
 ## For Consuming Projects
 

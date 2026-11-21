@@ -153,8 +153,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        id: checkout
 
       - uses: DavidAnson/markdownlint-cli2-action@v25
+
+      # Fails when the shared instruction blocks in AGENTS.md stop matching
+      # the aicers/agent-instructions release `.agent-instructions.toml`
+      # pins -- because a generated region was edited here, or because an
+      # update pull request was never merged. It sits in this job so that
+      # a drift failure fails `Markdown`, a required check.
+      #
+      # `@main`: the scripts are mechanism and come from `main`, while the
+      # blocks are content and come from the pin. No `with:`, because the
+      # release and the blocks to compare are both read from that file.
+      #
+      # `!cancelled()` rather than the default `success()`, so a lint
+      # failure above does not skip it: a drifted block is drift whether or
+      # not some other Markdown file breaks a rule. The `checkout` clause
+      # keeps a failed checkout from being reported as drift.
+      - name: Check shared instruction-block drift
+        if: ${{ !cancelled() && steps.checkout.outcome == 'success' }}
+        uses: aicers/agent-instructions/check-drift@main
 
   lint-shell:
     name: Lint Shell Scripts
@@ -172,11 +191,61 @@ jobs:
           scandir: tests
           additional_files: "*.sh"
 
+  test-release-surface:
+    name: Test Release Surface Guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Exercise check-release-surface.sh on throwaway repositories
+        run: ./tests/release-surface-test.sh
+
+  # The release pull request release-please keeps open is merged only
+  # after CI is dispatched on its branch, and this is the run that has to
+  # stop a release whose surface -- what fetch-theme.sh installs, plus
+  # fetch-theme.sh itself -- equals the last release's. Such a release
+  # would hand every consumer an empty-diff version bump, so the pull
+  # request stays open until a change to the surface lands. Every other
+  # run skips the job, which `CI Gate` counts as passing.
+  release-surface:
+    name: Release Surface
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      && startsWith(github.ref, 'refs/heads/release-please--')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # The guard reads the last version tag's tree, so the job needs the
+      # full history and the tags. actions/checkout is shallow and tagless
+      # by default, which would let the guard pass by comparing against
+      # nothing.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Compare the release surface with the last version tag
+        run: ./scripts/check-release-surface.sh
+
   gate:
     name: CI Gate
     runs-on: ubuntu-latest
     permissions: {}
-    needs: [build-html, build-pdf, test-installer, test-pdf-script, markdown, lint-shell]
+    needs:
+      - build-html
+      - build-pdf
+      - test-installer
+      - test-pdf-script
+      - test-release-surface
+      - markdown
+      - lint-shell
+      - release-surface
     if: ${{ always() }}
     steps:
       - name: Assert every job passed or was skipped

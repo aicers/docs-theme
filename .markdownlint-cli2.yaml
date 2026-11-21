@@ -3,6 +3,7 @@ globs:
 ignores:
   - "node_modules/**"
   - ".github/**"
+  - "CHANGELOG.md"
 config:
   MD024:
     siblings_only: true
