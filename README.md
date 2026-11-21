@@ -167,6 +167,15 @@ decided:
 - An added extension, theme feature, or asset is `feat`.
 - A CSS or PDF adjustment is `fix`.
 
+release-please reads the whole squash commit message, not only its
+title. A `BREAKING CHANGE:` footer in the body raises the version as `!`
+does, a `Release-As:` footer sets the version outright, and a body line
+that reads as a Conventional title, such as `feat: add a callout style`,
+becomes a changelog entry of its own. So the body of a squash commit is
+prose and carries none of these: a breaking change is marked by `!` in
+the title alone. The release pull request's title names the version the
+merged commits add up to; check it against their titles before merging.
+
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
 shows whether that consumer is actually affected.

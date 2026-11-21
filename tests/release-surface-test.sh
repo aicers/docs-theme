@@ -213,4 +213,22 @@ change "$source_repo" scripts/fetch-theme.sh
 git clone -q --depth 1 "file://$source_repo" "$WORK/shallow" 2> /dev/null
 expect_fail "$WORK/shallow" "refuses a shallow clone" "shallow"
 
+# Outside any Git repository both Git reads fail; that is an error, not
+# the "no plain version tag" pass.
+mkdir "$WORK/not-a-repo"
+status=0
+output="$(cd "$WORK/not-a-repo" && GIT_CEILING_DIRECTORIES="$WORK" \
+  "$GUARD" 2>&1)" || status=$?
+case "$status" in
+  0) die "passed outside a Git repository:"$'\n'"$output" ;;
+  2) ;;
+  *) die "outside a Git repository: expected exit 2, got $status:"$'\n'"$output" ;;
+esac
+case "$output" in
+  *"No plain version tag"*)
+    die "outside a Git repository: took the no-tag path:"$'\n'"$output" ;;
+  *"Cannot read the repository"*) ok "fails when Git cannot read the repository" ;;
+  *) die "outside a Git repository: unexpected output:"$'\n'"$output" ;;
+esac
+
 echo "All release-surface checks passed."

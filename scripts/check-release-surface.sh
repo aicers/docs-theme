@@ -44,14 +44,27 @@ SURFACE_PATHS=(
   scripts/fetch-theme.sh
 )
 
-if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+# Every Git failure stops the guard (exit 2). An error read as "no
+# shallow clone" or as "no tags" would let it pass without comparing
+# anything.
+shallow="$(git rev-parse --is-shallow-repository)" || {
+  echo "Cannot read the repository; run this inside a Git clone." >&2
+  exit 2
+}
+if [ "$shallow" = true ]; then
   echo "This clone is shallow, so the last version tag may be unreadable." >&2
   echo "Check out the full history and the tags (fetch-depth: 0)." >&2
   exit 2
 fi
 
-# The newest plain version tag, by MAJOR.MINOR.PATCH order.
-last_tag="$(git tag --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)"
+tags="$(git tag --list)" || {
+  echo "Cannot list the tags of this repository." >&2
+  exit 2
+}
+
+# The newest plain version tag, by MAJOR.MINOR.PATCH order. grep exits 1
+# when no tag is a plain version, which is the "no tag" case below.
+last_tag="$(printf '%s\n' "$tags" | { grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -n1)"
 
 if [ -z "$last_tag" ]; then
   echo "No plain version tag exists; skipping release-surface comparison."

@@ -7,13 +7,11 @@ name: PR title
 # pins; the action below reads it from there.
 #
 # `pull_request_target` so that a pull request from a fork is checked too,
-# with a token that is read-only here. Only pull requests into `main` are
-# checked: no other branch is squashed into the history release-please
-# reads.
+# with a token that is read-only here. Every pull request is checked,
+# whatever its base branch.
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened]
-    branches: [main]
 
 permissions: {}
 
