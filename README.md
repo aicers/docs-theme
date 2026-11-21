@@ -171,12 +171,23 @@ release-please reads the whole squash commit message, not only its
 title. A `BREAKING CHANGE:` footer in the body raises the version as `!`
 does, a `Release-As:` footer sets the version outright, and a body line
 that reads as a Conventional title, such as `feat: add a callout style`,
-becomes a changelog entry of its own. So the body of a squash commit is
-prose and carries none of these: a breaking change is marked by `!` in
-the title alone. Before merging the release pull request, check both
-its title, which names the version the merged commits add up to, and
-its `CHANGELOG.md` section, which should hold one entry per merged pull
-request, against those pull requests' titles. A body line that slipped
+becomes a changelog entry of its own, as does a
+`BEGIN_NESTED_COMMIT` block. So the body of a squash commit is prose and
+carries none of these: a breaking change is marked by `!` in the title
+alone.
+
+release-please also reads the description of each merged pull request.
+A `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block there replaces
+the whole squash commit message, title included, for every release
+built after it, and it can be added after the merge. So a pull request
+description carries no such block.
+
+Before merging the release pull request, check both its title, which
+names the version the merged commits add up to, and its `CHANGELOG.md`
+section against the titles of the pull requests merged since the last
+release. The section holds one entry per merged pull request, except
+that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and again
+under its own section. A body line or an override block that slipped
 through shows up there as a version or an entry no title accounts for;
 an extra entry leaves the version unchanged, so the title alone does
 not reveal it.
