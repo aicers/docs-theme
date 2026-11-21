@@ -286,14 +286,18 @@ release pull request is merged this way, and only this way:
   a Release run when it finishes, and only moments after it finishes, so
   this check, which filters by status on GitHub's side and so reaches
   every unfinished run however old, is repeated a minute apart until it
-  prints nothing twice in a row (the run check):
+  prints nothing twice in a row (the run check). A query that fails
+  prints `query failed`, so a failed check never counts as one that
+  printed nothing:
 
   ```sh
   for s in requested pending waiting queued in_progress; do
     gh run list --repo aicers/docs-theme --workflow ci.yml --branch main \
-      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]'
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]' \
+      || echo "query failed: ci.yml $s"
     gh run list --repo aicers/docs-theme --workflow release-please.yml \
-      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]'
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]' \
+      || echo "query failed: release-please.yml $s"
   done
   ```
 
@@ -307,8 +311,9 @@ release pull request is merged this way, and only this way:
     > reviewed.json
   ```
 
-  From then until `release_merge.sh` ends, which is after the tag and the
-  GitHub Release exist, nobody edits the title or the description. The
+  From then until the tag and the GitHub Release exist, which can be
+  after `release_merge.sh` ends, nobody edits the title or the
+  description. The
   merge is pinned to the head commit only, an edit leaves that commit as
   it was, and release-please reads the title and the description of the
   merged pull request when it publishes: the version from the title, the
@@ -334,7 +339,9 @@ release pull request is merged this way, and only this way:
   (`kill -INT` on its process id); an interrupted run keeps the label
   too. If the title or the description differs after the merge, put the
   reviewed ones back at once, before CI on the merge commit lets the
-  Release workflow publish:
+  Release workflow publish (this applies whenever the pull request has
+  merged and the GitHub Release does not exist yet, including after the
+  script ended):
 
   ```sh
   jq -r .body reviewed.json > reviewed-body.md
@@ -342,13 +349,31 @@ release pull request is merged this way, and only this way:
     --title "$(jq -r .title reviewed.json)" --body-file reviewed-body.md
   ```
 
-  Once the script ends, check that the GitHub Release is named after the
-  reviewed version and that its notes are the reviewed section, and
-  correct the notes with `gh release edit` if they are not.
-- After such a stop or interruption, the release pull request is not
-  merged as it now stands: review it again, correct it again where the
-  rewrite or the edit undid the correction, and merge it again the same
-  way, from the run check on.
+  If the script ends without printing `RELEASED`, whether it stopped
+  or was interrupted, do not take that to mean the pull request did not
+  merge: a merge call already sent can still land after an interrupt,
+  and the script can also stop after the merge, while it waits for the
+  tag and the GitHub Release. Read the pull request's state, and read it
+  once more a minute later before acting on `OPEN`:
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json state,mergeCommit
+  ```
+
+  If it is `MERGED`, the merge stands: keep the reviewed title and
+  description in place, putting them back as above if they differ, until
+  the tag and the GitHub Release exist, and run `release_merge.sh` again,
+  which merges nothing on a merged pull request, only waits for the tag
+  and the GitHub Release and lifts the hold. If it is `OPEN`, the next
+  bullet applies.
+
+  Once the tag and the GitHub Release exist, check that the Release is
+  named after the reviewed version and that its notes are the reviewed
+  section, and correct the notes with `gh release edit` if they are not.
+- After a stop or interruption that left the release pull request open,
+  it is not merged as it now stands: review it again, correct it again
+  where the rewrite or the edit undid the correction, and merge it again
+  the same way, from the run check on.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
