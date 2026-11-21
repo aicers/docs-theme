@@ -200,7 +200,17 @@ that reads as a Conventional title, such as `feat: add a callout style`,
 becomes a changelog entry of its own, as does a
 `BEGIN_NESTED_COMMIT` block. So the body of a squash commit is prose and
 carries none of these: a breaking change is marked by `!` in the title
-alone.
+alone. The repository's squash commit message setting does not keep a
+body out: a merge that supplies the body explicitly, as the AgentCoop
+merge does with the body `AGENTS.md` "Commit messages" names, sets it
+whatever that setting says.
+
+release-please matches `BEGIN_NESTED_COMMIT` as plain text anywhere in
+the message, the title included, in prose or a code span alike. A title
+that passes the title check and mentions the marker, such as
+``docs: explain the `BEGIN_NESTED_COMMIT` block``, is cut at the marker:
+its entry reads `explain the` followed by a stray backtick and loses its
+pull request link. So a title never spells that marker out either.
 
 release-please also reads the description of each merged pull request.
 A `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block there replaces
@@ -222,11 +232,12 @@ last release. The section holds one entry per merged pull request,
 except that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and
 again under its own section. A body line or an override block that
 slipped through shows up there as a version or an entry no title
-accounts for; an extra entry leaves the version unchanged, so the title
-alone does not reveal it. The description is checked as well because
-the GitHub Release takes its notes from there, not from
-`CHANGELOG.md`: a correction made only in `CHANGELOG.md` would leave
-the published notes as they were.
+accounts for, and a title cut at a marker as an entry shorter than its
+title; neither an extra entry nor a cut one changes the version, so the
+release pull request's title alone does not reveal them. The
+description is checked as well because the GitHub Release takes its
+notes from there, not from `CHANGELOG.md`: a correction made only in
+`CHANGELOG.md` would leave the published notes as they were.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
