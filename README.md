@@ -179,8 +179,14 @@ alone.
 release-please also reads the description of each merged pull request.
 A `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block there replaces
 the whole squash commit message, title included, for every release
-built after it, and it can be added after the merge. So a pull request
-description carries no such block.
+built after it, and it can be added after the merge. release-please
+matches the opening marker as plain text anywhere in the description,
+in prose or a code span alike, and needs no closing marker: everything
+after the first opening marker, up to a closing marker or a second
+opening marker, becomes the message. A description that only mentions
+the marker can therefore drop its pull request from the changelog. So a
+pull request description carries no such block and never spells the
+opening marker out.
 
 Before merging the release pull request, check both its title, which
 names the version the merged commits add up to, and its `CHANGELOG.md`
