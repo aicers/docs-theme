@@ -37,6 +37,7 @@ scripts/                Build and install helpers
 tests/                  Fixture-driven checks for the shipped scripts
   installer-test.sh       fetch-theme.sh, end to end
   pdf-test.sh             build-docs-pdf.sh, end to end
+  release-surface-test.sh check-release-surface.sh, on throwaway repos
 ```
 
 ## For Docs-Theme Contributors
@@ -104,35 +105,78 @@ runs the consumer-facing scripts against them:
 ```sh
 ./tests/installer-test.sh
 ./tests/pdf-test.sh
+./tests/release-surface-test.sh
 ```
 
 `installer-test.sh` needs `mkdocs` and reaches no network; the release
 path is driven by a stub `gh`. `pdf-test.sh` additionally needs
 `mkdocs-with-pdf` and `pdftotext` (poppler-utils), which it uses to read
-the rendered covers back. Both run in CI.
+the rendered covers back. `release-surface-test.sh` needs only `git`: it
+builds throwaway repositories and runs the release-surface guard against
+them. All three run in CI.
 
 ### Publishing a New Release
 
-1. Add an entry to `CHANGELOG.md` under `## <version>`.
-2. Tag and push, using that same version:
+Releases are made by
+[release-please](https://github.com/googleapis/release-please) from the
+titles of the pull requests merged into `main`:
 
-   ```sh
-   git tag <version>
-   git push origin <version>
-   ```
+- Every pull request title follows the Conventional title rule (see
+  `AGENTS.md`), and that title becomes the pull request's entry in
+  `CHANGELOG.md`. A pull request does not edit `CHANGELOG.md` itself;
+  the Changelog check fails one that does.
+- After CI passes on `main`, release-please keeps one release pull
+  request open, titled `chore(main): release X.Y.Z`. It collects the
+  titles merged since the last release into a new `CHANGELOG.md`
+  section and bumps the version in `version.txt`. No pull request other
+  than the release pull request changes `version.txt`.
+- The coordinator merges the release pull request with drive-agentcoop's
+  `kit/release_merge.sh`, following its PLAYBOOK's release rule (§3).
+  That dispatches CI on the release pull request's branch first, and the
+  release-surface guard described under [Versioning](#versioning) runs
+  there.
+- Once CI has passed on the merge commit, release-please tags it
+  `X.Y.Z` and publishes the GitHub Release named `X.Y.Z`. It takes the
+  version from the release pull request's title and the Release notes
+  from the release pull request's description, where it writes the same
+  generated section it adds to `CHANGELOG.md`. `fetch-theme.sh` uses
+  `gh release download`, so that published Release is what consumers
+  install.
 
-The `release.yml` workflow automatically creates a GitHub Release
-from the tag and extracts release notes from `CHANGELOG.md`.
-`fetch-theme.sh` uses `gh release download`, so the release must
-exist for consumers to install a version.
+Nobody pushes a release tag by hand.
+
+The release pull request is opened with `GITHUB_TOKEN`, so `pr-title.yml`
+never runs on it. Instead, the Release workflow's `Validate PR title` job
+posts a commit status of that name on the release pull request's head
+after each run that created or updated it.
+If that job fails before posting, the required status is missing from
+the release pull request. Re-run the failed job of the original run
+(`gh run rerun <run-id> --failed`, or "Re-run failed jobs" on the run's
+page). A re-run keeps the outputs of the jobs that succeeded, so the job
+finds the release pull request again and reads its current head and
+title before posting. A re-run is possible for 30 days after the run.
+
+A fresh dispatch of the Release workflow on `main` restores the status
+only on a later UTC date than the release pull request's last update.
+release-please rewrites the release pull request only when the
+description it generates differs from the current one, and that
+description dates the new section with the UTC date of the run. On the
+same UTC date, with no new merge, the description is unchanged:
+release-please leaves the release pull request alone and reports no pull
+request, so the job is skipped. On a later UTC date the new date changes
+the description, so release-please rewrites the release pull request,
+with a new head commit, and the job posts the status on that head. The
+next merge into `main` also updates the release pull request and posts
+the status again. While a correction by hand of the release pull request
+stands, nobody dispatches the Release workflow: it rewrites a corrected
+release pull request on any date (see [Versioning](#versioning)).
 
 ## Versioning
 
-Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix, matching the
-tag pattern (`[0-9]+.[0-9]+.[0-9]+`) that `release.yml` triggers on.
-Because a single commit here controls every consumer's build and a tag
-becomes a version-bump pull request in each consumer, the number states
-how a release can affect a consumer's build:
+Releases are tagged `MAJOR.MINOR.PATCH` with no `v` prefix. Because a
+single commit here controls every consumer's build and a release becomes
+a version-bump pull request in each consumer, the number states how a
+release can affect a consumer's build:
 
 - **MAJOR** — removing a markdown extension or theme feature from
   `mkdocs-base.yml`, renaming or relocating an installed path, or any
@@ -141,20 +185,213 @@ how a release can affect a consumer's build:
 - **MINOR** — adding a markdown extension, theme feature, or asset.
 - **PATCH** — CSS and PDF adjustments that cannot break a build.
 
+release-please derives the next version from the pull request titles
+merged since the last release, so the title is where the level is
+decided:
+
+- A change that can break a consumer's build — anything on the MAJOR
+  list above — carries `!` in its title, as in
+  `feat!: drop the admonition extension`.
+- An added extension, theme feature, or asset is `feat`.
+- A CSS or PDF adjustment is `fix`.
+
+release-please reads the whole squash commit message, not only its
+title. A `BREAKING CHANGE:` footer in the body raises the version as `!`
+does, a `Release-As:` footer sets the version outright, and a body line
+that reads as a Conventional title, such as `feat: add a callout style`,
+becomes a changelog entry of its own, as does a
+`BEGIN_NESTED_COMMIT` block. So the body of a squash commit is prose and
+carries none of these: a breaking change is marked by `!` in the title
+alone. The repository's squash commit message setting does not keep a
+body out: a merge that supplies the body explicitly, as the AgentCoop
+merge does with the body `AGENTS.md` "Commit messages" names, sets it
+whatever that setting says.
+
+release-please matches `BEGIN_NESTED_COMMIT` as plain text anywhere in
+the message, the title included, in prose or a code span alike. A title
+that passes the title check and mentions the marker is cut there, and
+whatever follows the marker is read as a commit of its own. So
+``docs: explain the `BEGIN_NESTED_COMMIT` block`` gives one entry,
+`explain the` followed by a stray backtick, without its pull request
+link; and `fix: explain the BEGIN_NESTED_COMMIT feat!: drop the old style`
+gives two, a `fix` entry `explain the` and a breaking `feat` entry
+`drop the old style`, and raises the version as a `!` title does: `0.4.0`
+rather than `0.3.1` after `0.3.0`. So a title never spells that marker
+out either.
+
+release-please also reads the description of each merged pull request.
+A `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block there replaces
+the whole squash commit message, title included, for every release
+built after it, and it can be added after the merge. release-please
+matches the opening marker as plain text anywhere in the description,
+in prose or a code span alike, and needs no closing marker: everything
+after the first opening marker, up to a closing marker or a second
+opening marker, becomes the message. A description that only mentions
+the marker can therefore drop its pull request from the changelog. So a
+pull request description carries no such block and never spells the
+opening marker out.
+
+Before `release_merge.sh` merges the release pull request, the
+coordinator checks its title, which names the version the merged commits
+add up to, and both copies of the generated section, the one in its
+`CHANGELOG.md` and the one in its description, against the titles of the
+pull requests merged since the last release, and corrects the release
+pull request by hand if the version or the notes are wrong. A corrected
+version goes into every place the release pull request records it: its
+title, the heading and compare link of both copies of the section,
+`version.txt` and `.release-please-manifest.json`, which all hold the
+same version before `release_merge.sh` runs. The tag and the GitHub
+Release take the version from the title, and the next release pull
+request looks for the last release by the version in the manifest, so a
+manifest left at the uncorrected version would not find the release
+actually published. The section
+holds one entry per merged pull request, except that a `!` title is
+listed twice: under `⚠ BREAKING CHANGES` and again under its own
+section. A body line, an override block or a marker in a title that
+slipped through shows up there as a version or an entry no title
+accounts for, or as an entry shorter than its title. One that adds a
+breaking entry raises the version. One that adds an entry no higher than
+the level the merged titles already reach leaves it as it was: below
+1.0.0, any extra `feat` or `fix` entry, since both raise the patch; from
+1.0.0 on, an extra `fix` entry, or an extra `feat` entry when a title is
+already `feat`, while an extra `feat` entry in a release of fixes alone
+raises the minor. A title cut short leaves it as it was too. So the
+release pull request's title alone does not reveal every one of them.
+The description is checked as well because the GitHub Release takes its
+notes from there, not from `CHANGELOG.md`: a correction made only in
+`CHANGELOG.md` would leave the published notes as they were. That review
+is the check on every input release-please reads; no workflow enforces
+the rules above.
+
+A correction by hand holds only until the Release workflow next updates
+the release pull request, and that does not wait for `main` to move. Its
+release pull request step runs whenever the commit its run is about is
+still `main`'s head, and release-please rewrites the release pull
+request whenever the description it generates differs from the current
+one, which a corrected description always does: it force-pushes the
+release branch back to its own proposal and resets the title and the
+description, on the same UTC date too. Besides a merge into `main`,
+which `release-merging` holds, three things start such a run with `main`
+unmoved: a Release run still queued or running when the correction is
+pushed, a dispatch of the Release workflow, and a re-run of a Release
+run or of the `push` run of CI on `main`'s head. The CI that
+`release_merge.sh` dispatches on the release branch is not one of them:
+the Release workflow acts only on a `push` run of CI. So a corrected
+release pull request is merged this way, and only this way:
+
+- Add `release-merging` to the release pull request, as the PLAYBOOK's
+  release rule says, then wait until no run of CI on `main` and no
+  Release run is unfinished. A CI run on `main` that was already running
+  when the label went on, or that a merge just before it started, queues
+  a Release run when it finishes, and only moments after it finishes, so
+  this check, which filters by status on GitHub's side and so reaches
+  every unfinished run however old, is repeated a minute apart until it
+  prints nothing twice in a row (the run check). A query that fails
+  prints `query failed`, so a failed check never counts as one that
+  printed nothing:
+
+  ```sh
+  for s in requested pending waiting queued in_progress; do
+    gh run list --repo aicers/docs-theme --workflow ci.yml --branch main \
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]' \
+      || echo "query failed: ci.yml $s"
+    gh run list --repo aicers/docs-theme --workflow release-please.yml \
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]' \
+      || echo "query failed: release-please.yml $s"
+  done
+  ```
+
+  From then until the merge, nobody dispatches or re-runs the Release
+  workflow or re-runs CI on `main`.
+- Push the correction, review the release pull request once more, and
+  save what was reviewed: its head commit, title and description.
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title,body \
+    > reviewed.json
+  ```
+
+  From then until the tag and the GitHub Release exist, which can be
+  after `release_merge.sh` ends, nobody edits the title or the
+  description. The
+  merge is pinned to the head commit only, an edit leaves that commit as
+  it was, and release-please reads the title and the description of the
+  merged pull request when it publishes: the version from the title, the
+  notes from the description. So an edit made while CI runs, or after
+  the merge but before the Release exists, would change what is
+  published without failing any check.
+- Run the run check once more, then run `release_merge.sh` with
+  `RELEASE_MERGE_ROUNDS=1`. A round merges only the head it read when it
+  started, but a rewrite during a round makes the script start another
+  round at the new head, which nobody reviewed; with one round it stops
+  instead, and leaves `release-merging` on, so every other merge stays
+  held. A rewrite before its first read still gives it a head nobody
+  reviewed, so until the script ends, compare the pull request with what
+  was reviewed, and the head and version the script printed for its round
+  (`head <sha>, version <X.Y.Z>`) with the reviewed head and title:
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title,body \
+    | cmp - reviewed.json
+  ```
+
+  If any of them differs before the merge, interrupt the script
+  (`kill -INT` on its process id); an interrupted run keeps the label
+  too. If the title or the description differs after the merge, put the
+  reviewed ones back at once, before CI on the merge commit lets the
+  Release workflow publish (this applies whenever the pull request has
+  merged and the GitHub Release does not exist yet, including after the
+  script ended):
+
+  ```sh
+  jq -r .body reviewed.json > reviewed-body.md
+  gh pr edit <pr> --repo aicers/docs-theme \
+    --title "$(jq -r .title reviewed.json)" --body-file reviewed-body.md
+  ```
+
+  If the script ends without printing `RELEASED`, whether it stopped
+  or was interrupted, do not take that to mean the pull request did not
+  merge: a merge call already sent can still land after an interrupt,
+  and the script can also stop after the merge, while it waits for the
+  tag and the GitHub Release. Read the pull request's state, and read it
+  once more a minute later before acting on `OPEN`:
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json state,mergeCommit
+  ```
+
+  If it is `MERGED`, the merge stands: keep the reviewed title and
+  description in place, putting them back as above if they differ, until
+  the tag and the GitHub Release exist, and run `release_merge.sh` again,
+  which merges nothing on a merged pull request, only waits for the tag
+  and the GitHub Release and lifts the hold. If it is `OPEN`, the next
+  bullet applies.
+
+  Once the tag and the GitHub Release exist, check that the Release is
+  named after the reviewed version and that its notes are the reviewed
+  section, and correct the notes with `gh release edit` if they are not.
+- After a stop or interruption that left the release pull request open,
+  it is not merged as it now stands: review it again, correct it again
+  where the rewrite or the edit undid the correction, and merge it again
+  the same way, from the run check on.
+
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
 shows whether that consumer is actually affected.
 
-While the version is below `1.0.0`, a breaking change bumps MINOR rather
-than MAJOR, and everything else bumps PATCH. The project stays on `0.x`
-until the contract above has been proven by consumers actually adopting
-it.
+While the version is below `1.0.0`, a `!` title raises MINOR rather than
+MAJOR, and every other change, `feat` included, raises PATCH. The project
+stays on `0.x` until the contract above has been proven by consumers
+actually adopting it.
 
 A release is only meaningful when the installed surface actually changed.
-The release workflow rejects a tag whose release surface — everything
-`fetch-theme.sh` installs, plus `fetch-theme.sh` itself — is byte-identical
-to the previous tag's, because such a tag has nothing for consumers to
-fetch and would only produce an empty-diff bump pull request.
+The release surface is everything `fetch-theme.sh` installs, plus
+`fetch-theme.sh` itself. A release pull request whose surface is
+byte-identical to the last release's fails the CI dispatched on it before
+it is merged, because such a release has nothing for consumers to fetch
+and would only produce an empty-diff bump pull request. It stays open
+until a change to the surface lands, and release-please then brings it up
+to date.
 
 ## For Consuming Projects
 

@@ -2,6 +2,9 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     schedule:
       interval: "weekly"
     groups:
@@ -29,6 +32,9 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     schedule:
       interval: "weekly"
     groups:
