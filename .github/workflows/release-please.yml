@@ -181,7 +181,11 @@ jobs:
       # release-please reads `main` as it is now, not this run's commit. If
       # `main` has moved on, the CI run of the newer commit will start a run
       # of its own, which brings the release pull request up to that commit;
-      # this one leaves it alone rather than racing it.
+      # this one leaves it alone rather than racing it. A run whose commit is
+      # still the head does rewrite a release pull request corrected by
+      # hand, since the description release-please generates then differs
+      # from the corrected one; README "Versioning" says how a correction
+      # is kept until the merge.
       - name: Check that the commit is still the head of main
         id: head
         env:

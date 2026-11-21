@@ -167,7 +167,9 @@ request, so the job is skipped. On a later UTC date the new date changes
 the description, so release-please rewrites the release pull request,
 with a new head commit, and the job posts the status on that head. The
 next merge into `main` also updates the release pull request and posts
-the status again.
+the status again. While a correction by hand of the release pull request
+stands, nobody dispatches the Release workflow: it rewrites a corrected
+release pull request on any date (see [Versioning](#versioning)).
 
 ## Versioning
 
@@ -260,6 +262,49 @@ notes from there, not from `CHANGELOG.md`: a correction made only in
 `CHANGELOG.md` would leave the published notes as they were. That review
 is the check on every input release-please reads; no workflow enforces
 the rules above.
+
+A correction by hand holds only until the Release workflow next updates
+the release pull request, and that does not wait for `main` to move. Its
+release pull request step runs whenever the commit its run is about is
+still `main`'s head, and release-please rewrites the release pull
+request whenever the description it generates differs from the current
+one, which a corrected description always does: it force-pushes the
+release branch back to its own proposal and resets the title and the
+description, on the same UTC date too. Besides a merge into `main`,
+which `release-merging` holds, three things start such a run with `main`
+unmoved: a Release run still queued or running when the correction is
+pushed, a dispatch of the Release workflow, and a re-run of a Release
+run or of the `push` run of CI on `main`'s head. The CI that
+`release_merge.sh` dispatches on the release branch is not one of them:
+the Release workflow acts only on a `push` run of CI. So a corrected
+release pull request is merged this way, and only this way:
+
+- Add `release-merging` to the release pull request, as the PLAYBOOK's
+  release rule says, then wait until no Release run is queued or
+  running, that is, until this prints nothing:
+
+  ```sh
+  gh run list --repo aicers/docs-theme --workflow release-please.yml \
+    --json status,databaseId --jq '.[] | select(.status != "completed")'
+  ```
+
+  From then until the merge, nobody dispatches or re-runs the Release
+  workflow or re-runs CI on `main`.
+- Push the correction, review the release pull request once more, and
+  note its head commit and title
+  (`gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title`).
+- Run `release_merge.sh` with `RELEASE_MERGE_ROUNDS=1`. A round merges
+  only the head it read when it started, but a rewrite during a round
+  makes the script start another round at the new head, which nobody
+  reviewed; with one round it stops instead, and leaves
+  `release-merging` on, so every other merge stays held. Before the CI it
+  dispatched finishes, check that the head and the version it printed
+  for its round (`head <sha>, version <X.Y.Z>`) are the ones reviewed,
+  and interrupt it (`kill -INT` on its process id) if they are not; an
+  interrupted run keeps the label too.
+- After such a stop or interruption, the release pull request is not
+  merged as it now stands: review it again, correct it again where the
+  rewrite undid the correction, and run the script again the same way.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
