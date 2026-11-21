@@ -207,10 +207,15 @@ whatever that setting says.
 
 release-please matches `BEGIN_NESTED_COMMIT` as plain text anywhere in
 the message, the title included, in prose or a code span alike. A title
-that passes the title check and mentions the marker, such as
-``docs: explain the `BEGIN_NESTED_COMMIT` block``, is cut at the marker:
-its entry reads `explain the` followed by a stray backtick and loses its
-pull request link. So a title never spells that marker out either.
+that passes the title check and mentions the marker is cut there, and
+whatever follows the marker is read as a commit of its own. So
+``docs: explain the `BEGIN_NESTED_COMMIT` block`` gives one entry,
+`explain the` followed by a stray backtick, without its pull request
+link; and `fix: explain the BEGIN_NESTED_COMMIT feat!: drop the old style`
+gives two, a `fix` entry `explain the` and a breaking `feat` entry
+`drop the old style`, and raises the version as a `!` title does: `0.4.0`
+rather than `0.3.1` after `0.3.0`. So a title never spells that marker
+out either.
 
 release-please also reads the description of each merged pull request.
 A `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block there replaces
@@ -230,11 +235,12 @@ generated section, the one in its `CHANGELOG.md` and the one in its
 description, against the titles of the pull requests merged since the
 last release. The section holds one entry per merged pull request,
 except that a `!` title is listed twice: under `⚠ BREAKING CHANGES` and
-again under its own section. A body line or an override block that
-slipped through shows up there as a version or an entry no title
-accounts for, and a title cut at a marker as an entry shorter than its
-title; neither an extra entry nor a cut one changes the version, so the
-release pull request's title alone does not reveal them. The
+again under its own section. A body line, an override block or a marker
+in a title that slipped through shows up there as a version or an entry
+no title accounts for, or as an entry shorter than its title. One that
+adds a breaking entry raises the version; an extra `feat` or `fix` entry,
+or a title cut short, leaves it as it was, so the release pull request's
+title alone does not reveal every one of them. The
 description is checked as well because the GitHub Release takes its
 notes from there, not from `CHANGELOG.md`: a correction made only in
 `CHANGELOG.md` would leave the published notes as they were.
