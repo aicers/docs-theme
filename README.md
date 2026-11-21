@@ -280,31 +280,75 @@ the Release workflow acts only on a `push` run of CI. So a corrected
 release pull request is merged this way, and only this way:
 
 - Add `release-merging` to the release pull request, as the PLAYBOOK's
-  release rule says, then wait until no Release run is queued or
-  running, that is, until this prints nothing:
+  release rule says, then wait until no run of CI on `main` and no
+  Release run is unfinished. A CI run on `main` that was already running
+  when the label went on, or that a merge just before it started, queues
+  a Release run when it finishes, and only moments after it finishes, so
+  this check, which filters by status on GitHub's side and so reaches
+  every unfinished run however old, is repeated a minute apart until it
+  prints nothing twice in a row (the run check):
 
   ```sh
-  gh run list --repo aicers/docs-theme --workflow release-please.yml \
-    --json status,databaseId --jq '.[] | select(.status != "completed")'
+  for s in requested pending waiting queued in_progress; do
+    gh run list --repo aicers/docs-theme --workflow ci.yml --branch main \
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]'
+    gh run list --repo aicers/docs-theme --workflow release-please.yml \
+      --status "$s" --limit 1000 --json databaseId,event,status --jq '.[]'
+  done
   ```
 
   From then until the merge, nobody dispatches or re-runs the Release
   workflow or re-runs CI on `main`.
 - Push the correction, review the release pull request once more, and
-  note its head commit and title
-  (`gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title`).
-- Run `release_merge.sh` with `RELEASE_MERGE_ROUNDS=1`. A round merges
-  only the head it read when it started, but a rewrite during a round
-  makes the script start another round at the new head, which nobody
-  reviewed; with one round it stops instead, and leaves
-  `release-merging` on, so every other merge stays held. Before the CI it
-  dispatched finishes, check that the head and the version it printed
-  for its round (`head <sha>, version <X.Y.Z>`) are the ones reviewed,
-  and interrupt it (`kill -INT` on its process id) if they are not; an
-  interrupted run keeps the label too.
+  save what was reviewed: its head commit, title and description.
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title,body \
+    > reviewed.json
+  ```
+
+  From then until `release_merge.sh` ends, which is after the tag and the
+  GitHub Release exist, nobody edits the title or the description. The
+  merge is pinned to the head commit only, an edit leaves that commit as
+  it was, and release-please reads the title and the description of the
+  merged pull request when it publishes: the version from the title, the
+  notes from the description. So an edit made while CI runs, or after
+  the merge but before the Release exists, would change what is
+  published without failing any check.
+- Run the run check once more, then run `release_merge.sh` with
+  `RELEASE_MERGE_ROUNDS=1`. A round merges only the head it read when it
+  started, but a rewrite during a round makes the script start another
+  round at the new head, which nobody reviewed; with one round it stops
+  instead, and leaves `release-merging` on, so every other merge stays
+  held. A rewrite before its first read still gives it a head nobody
+  reviewed, so until the script ends, compare the pull request with what
+  was reviewed, and the head and version the script printed for its round
+  (`head <sha>, version <X.Y.Z>`) with the reviewed head and title:
+
+  ```sh
+  gh pr view <pr> --repo aicers/docs-theme --json headRefOid,title,body \
+    | cmp - reviewed.json
+  ```
+
+  If any of them differs before the merge, interrupt the script
+  (`kill -INT` on its process id); an interrupted run keeps the label
+  too. If the title or the description differs after the merge, put the
+  reviewed ones back at once, before CI on the merge commit lets the
+  Release workflow publish:
+
+  ```sh
+  jq -r .body reviewed.json > reviewed-body.md
+  gh pr edit <pr> --repo aicers/docs-theme \
+    --title "$(jq -r .title reviewed.json)" --body-file reviewed-body.md
+  ```
+
+  Once the script ends, check that the GitHub Release is named after the
+  reviewed version and that its notes are the reviewed section, and
+  correct the notes with `gh release edit` if they are not.
 - After such a stop or interruption, the release pull request is not
   merged as it now stands: review it again, correct it again where the
-  rewrite undid the correction, and run the script again the same way.
+  rewrite or the edit undid the correction, and merge it again the same
+  way, from the run check on.
 
 Templates are **not** versioned separately: one repository version covers
 all of them, and the vendored diff in a consumer's bump pull request
