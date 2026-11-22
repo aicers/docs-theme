@@ -4,6 +4,16 @@ This file documents recent notable changes to this project. The format of this
 file is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/aicers/docs-theme/compare/0.3.0...0.3.1) (2026-11-22)
+
+
+### Other
+
+* automate releases with release-please ([#55](https://github.com/aicers/docs-theme/issues/55)) ([c2b572b](https://github.com/aicers/docs-theme/commit/c2b572b0beaaf56fa16e5c3e327daeb65fe4ea68))
+* count the triggering CI run as passed in the release gate ([#61](https://github.com/aicers/docs-theme/issues/61)) ([ad1873f](https://github.com/aicers/docs-theme/commit/ad1873f1062018e504eb8eebb7e5671d6cab97dd)), closes [#60](https://github.com/aicers/docs-theme/issues/60)
+* update shared instruction blocks to 0.6.3 ([#58](https://github.com/aicers/docs-theme/issues/58)) ([c8f6a67](https://github.com/aicers/docs-theme/commit/c8f6a676105948be0b7b9201d3dbc8f30299da17))
+* update shared instruction blocks to 0.6.4 ([#59](https://github.com/aicers/docs-theme/issues/59)) ([6138a90](https://github.com/aicers/docs-theme/commit/6138a90c10b1a35b610438b6f907dc5fe8d94a8e))
+
 ## [0.3.0] - 2026-08-08
 
 ### Added
